@@ -1,7 +1,7 @@
 {
   "name": "vfou/php-search",
   "type": "library",
-  "description": "A Lucene-inspired PHP Search engine",
+  "description": "A Lucene-inspired PHP Search engine library",
   "keywords": [
     "search", "search engine", "php"
   ],
