@@ -3,7 +3,7 @@
 install this library via Composer :
 
 ```
-composer require vfou/php-search
+composer require vfou/php-search 0.1
 ```
 
 # Quick start
