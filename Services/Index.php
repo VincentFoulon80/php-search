@@ -171,13 +171,8 @@ class Index
         $filters = array_merge($default,$filters);
         if(!is_array($query)){
             // simple search
-
-            $start = microtime(true);
-
             $tokens = array_keys($this->tokenize($query, ["_type"=>"search","_boost"=>0]));
 
-            $end = microtime(true);
-            echo("tokenization : ".(($end-$start)*1000)." ms<br>");
             asort($tokens);
             $tmp = array_merge($tokens, $filters);
             arsort($tmp);
@@ -188,9 +183,6 @@ class Index
             }
 
             $results = [];
-
-            $start = microtime(true);
-
             foreach($tokens as $token){
                 $tmp = $this->find($token);
                 foreach($tmp as $k => $v){
@@ -202,13 +194,7 @@ class Index
                 }
             }
             arsort($results);
-
-            $end = microtime(true);
-            echo("fetching results : ".(($end-$start)*1000)." ms<br>");
-
             $documents = [];
-
-            $start = microtime(true);
 
             $i = 0;
             foreach($results as $doc => $score){
@@ -221,9 +207,6 @@ class Index
                 $documents[$doc]['_score'] = $score;
                 $i++;
             }
-
-            $end = microtime(true);
-            echo("fetching documents : ".(($end-$start)*1000)." ms<br>");
 
             $response = [
                 "numFound" => count($results),
