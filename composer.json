@@ -1,0 +1,32 @@
+{
+  "name": "vfou/php-search",
+  "type": "library",
+  "description": "A Lucene-inspired PHP Search engine",
+  "keywords": [
+    "search", "search engine", "php"
+  ],
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Vincent Foulon",
+      "email": "vincent.foulon80@gmail.com"
+    }
+  ],
+  "require": {
+    "php": "^7.0"
+  },
+  "require-dev": {
+  },
+  "conflict": {
+  },
+  "autoload": {
+    "psr-4": {
+      "VFou\\Search\\": ""
+    }
+  },
+  "extra": {
+    "branch-alias": null
+  },
+  "support": {
+  }
+}
