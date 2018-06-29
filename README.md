@@ -90,6 +90,6 @@ For more informations about this library, go to [the wiki page of this repositor
 
 # License
 
-This library is under the MIT license. See the complete license [in the bundle](LICENSE)
+This library is under the MIT license. [See the complete license](LICENSE)
 
 
