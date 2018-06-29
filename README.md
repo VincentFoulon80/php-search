@@ -71,7 +71,7 @@ $doc = [
         ]
     ]
 ];
-$engengine->update($doc);
+$engine->update($doc);
 ```
 
 Note : you can also put these two documents in one array and use the updateMultiple() function for indexing multiple documents at once.
