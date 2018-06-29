@@ -88,7 +88,7 @@ class Engine
                 "cache_dir" => DIRECTORY_SEPARATOR."engine".DIRECTORY_SEPARATOR."cache"
             ],
             "schemas" => [
-                "post" => [
+                "example-post" => [
                     "title" => [
                         "_type" => "string",
                         "_indexed" => true,
