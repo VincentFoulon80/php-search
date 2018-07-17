@@ -36,7 +36,7 @@ class File
     public function __construct($directory, $name)
     {
         $this->directory = $directory;
-        $this->name = $name;
+        $this->name = str_replace("/","_",$name);
         $this->deleted = false;
         $this->loaded = false;
     }
@@ -66,7 +66,8 @@ class File
                 file_put_contents($path, serialize($this->content));
             }
         } else {
-            unlink($path);
+			if(file_exists($path))
+				unlink($path);
         }
         $this->content = [];
         $this->loaded = false;
@@ -76,7 +77,9 @@ class File
      * @throws \Exception
      */
     public function __destruct(){
-        $this->unload();
+		if($this->loaded || $this->modified){
+			$this->unload();
+		}
     }
 
     /**
