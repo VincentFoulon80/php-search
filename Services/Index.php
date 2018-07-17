@@ -305,8 +305,10 @@ class Index
             case "list":
                 $def = array_merge($definition, ["_type"=>$definition['_type.']]);
                 $tmp = [];
-                foreach(!empty($fieldName) ? $data[$fieldName] : $data as $d){
-                    $tmp[] = $this->buildField("", $def, $d);
+                if(!empty($fieldName) ? !empty($data[$fieldName]) : !empty($data)){
+                    foreach(!empty($fieldName) ? $data[$fieldName] : $data as $d){
+                        $tmp[] = $this->buildField("", $def, $d);
+                    }
                 }
                 return $tmp;
                 break;
@@ -336,9 +338,11 @@ class Index
                 case "list":
                     $def = array_merge($definition, ["_type"=>$definition['_type.']]);
                     $tmp = [];
-                    foreach(!empty($fieldName) ? $data[$fieldName] : $data as $d){
-                        $tmp[] = $this->buildIndex("", $def, $d);
-                    }
+					if(!empty($fieldName) ? !empty($data[$fieldName]) : !empty($data)){
+						foreach(!empty($fieldName) ? $data[$fieldName] : $data as $d){
+							$tmp[] = $this->buildIndex("", $def, $d);
+						}
+					}
                     return $tmp;
                     break;
                 case "array":
@@ -367,11 +371,16 @@ class Index
         foreach($typeDef as $tokenizer){
             $data = iterator_to_array(new \RecursiveIteratorIterator(new \RecursiveArrayIterator($tokenizer::tokenize($data))));
         }
-        $data = array_flip(array_filter($data));
-        foreach($data as $k=>$d){
-            $data[$k] = $def['_boost'];
+        $data = array_filter($data);
+        $res = [];
+        foreach($data as $d=>$k){
+            if(isset($res[$k])){
+                $res[$k] += $def['_boost'];
+            } else {
+                $res[$k] = $def['_boost'];
+            }
         }
-        return $data;
+        return $res;
     }
 
     /**
