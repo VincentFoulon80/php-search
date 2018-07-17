@@ -13,8 +13,12 @@ class DateFormatTokenizer implements TokenizerInterface
 
     public static function tokenize($data)
     {
-        return array_map(function(\DateTime $dt){
-            return $dt->format(DATE_ATOM);
+        return array_map(function($dt){
+            if(is_a($dt, \DateTime::class)){
+                return $dt->format(DATE_ATOM);
+            } else {
+                return $dt;
+            }
         }, $data);
     }
 }

@@ -15,7 +15,7 @@ class WhiteSpaceTokenizer implements TokenizerInterface
     public static function tokenize($data)
     {
         return array_map(function($elem){
-            return explode(" ",$elem); // TODO : preg_replace whitespaces
+            return preg_split("/\s/",$elem);
         }, $data);
     }
 }
