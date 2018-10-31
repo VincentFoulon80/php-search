@@ -1,3 +1,8 @@
+# Demo
+
+A small demo of this search engine is available [here](https://midnight-cms.com/search.php).
+This demo is made with a dataset of 1000 movies from 2006 and 2016. The results are provided as you type.
+
 # Installation
 
 install this library via Composer :
