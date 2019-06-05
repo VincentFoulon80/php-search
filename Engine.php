@@ -2,6 +2,7 @@
 
 namespace VFou\Search;
 
+use Exception;
 use VFou\Search\Services\Index;
 use VFou\Search\Tokenizers\DateFormatTokenizer;
 use VFou\Search\Tokenizers\DateSplitTokenizer;
@@ -25,7 +26,7 @@ class Engine
     /**
      * Engine constructor.
      * @param array $config
-     * @throws \Exception
+     * @throws Exception
      */
     public function __construct($config = [])
     {
@@ -35,6 +36,8 @@ class Engine
     }
 
     /**
+     * Get the Engine's index. Used to perform modifications to the index,
+     * such as clearing the cache or rebuilding the index
      * @return Index
      */
     public function getIndex(){
@@ -42,35 +45,51 @@ class Engine
     }
 
     /**
+     * Insert or update a given document to the index
      * @param $document
      * @return bool
-     * @throws \Exception
+     * @throws Exception
      */
     public function update($document){
         return $this->index->update($document);
     }
 
     /**
+     * Insert or update multiple documents to the index
      * @param array $document
      * @return bool
-     * @throws \Exception
+     * @throws Exception
      */
     public function updateMultiple(array $document){
         return $this->index->updateMultiple($document);
     }
 
     /**
+     * perform a search
      * @param $query
      * @param array $filters
      * @return array
+     * @throws Exception
      */
     public function search($query, $filters = []){
         return $this->index->search($query, $filters);
     }
 
     /**
+     * Suggest search terms
+     * @param $query
+     * @return array
+     * @throws Exception
+     */
+    public function suggest($query){
+        return $this->index->suggest($query);
+    }
+
+    /**
+     * delete the given document ID into the index
      * @param $id
      * @return bool
+     * @throws Exception
      */
     public function delete($id){
         return $this->index->delete($id);

@@ -54,17 +54,9 @@ class Directory
     public function open($filename, $createIfNotExist = true){
         if(!isset($this->files[$filename])){
             if(file_exists($this->path.$filename)){
-                if($this->keepOpen){
-                    $this->files[$filename] = new File($this->path, $filename);
-                } else {
-                    return new File($this->path, $filename);
-                }
+                $this->files[$filename] = new File($this->path, $filename, $this->keepOpen);
             } elseif($createIfNotExist){
-                if($this->keepOpen){
-                    $this->files[$filename] = new File($this->path, $filename);
-                } else {
-                    return new File($this->path, $filename);
-                }
+                $this->files[$filename] = new File($this->path, $filename, $this->keepOpen);
             } else {
                 return null;
             }

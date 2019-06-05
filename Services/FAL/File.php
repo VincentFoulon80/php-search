@@ -29,16 +29,28 @@ class File
     private $modified;
 
     /**
+     * @var bool
+     */
+    private $loaded;
+
+    /**
+     * @var bool
+     */
+    private $keepOpen;
+
+    /**
      * File constructor.
      * @param $directory
      * @param $name
+     * @param bool $keepOpen
      */
-    public function __construct($directory, $name)
+    public function __construct($directory, $name, $keepOpen = true)
     {
         $this->directory = $directory;
         $this->name = str_replace("/","_",$name);
         $this->deleted = false;
         $this->loaded = false;
+        $this->keepOpen = $keepOpen;
     }
 
     public function load(){
@@ -90,14 +102,19 @@ class File
     }
 
     /**
-     * @return string
+     * @return string|array
+     * @throws \Exception
      */
     public function getContent(){
         if(!$this->loaded){
             $this->load();
             $this->loaded = true;
         }
-        return $this->content;
+        $content = $this->content;
+        if(!$this->keepOpen){
+            $this->unload();
+        }
+        return $content;
     }
 
     /**

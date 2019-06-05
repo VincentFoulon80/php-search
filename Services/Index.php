@@ -2,6 +2,10 @@
 
 namespace VFou\Search\Services;
 
+use DateTime;
+use Exception;
+use RecursiveArrayIterator;
+use RecursiveIteratorIterator;
 use VFou\Search\Services\FAL\Directory;
 use VFou\Search\Tokenizers\TokenizerInterface;
 
@@ -37,7 +41,7 @@ class Index
      * @param $config
      * @param $schemas
      * @param $types
-     * @throws \Exception
+     * @throws Exception
      */
     public function __construct($config, $schemas, $types)
     {
@@ -47,8 +51,8 @@ class Index
             $this->index = new Directory($config['var_dir'].$config['index_dir']);
             $this->documents = new Directory($config['var_dir'].$config['documents_dir'], false);
             $this->cache = new Directory($config['var_dir'].$config['cache_dir']);
-        } catch (\Exception $e) {
-            throw new \Exception("Unable to load Index : ".$e->getMessage());
+        } catch (Exception $e) {
+            throw new Exception("Unable to load Index : ".$e->getMessage());
         }
 
     }
@@ -56,7 +60,7 @@ class Index
     /**
      * @param $document
      * @return bool
-     * @throws \Exception
+     * @throws Exception
      */
     public function update($document)
     {
@@ -64,19 +68,19 @@ class Index
             $document = get_object_vars($document);
         }
         if(!isset($document['id'])){
-            throw new \Exception("Document should have 'id' property.");
+            throw new Exception("Document should have 'id' property.");
         }
         if(!isset($document['type'])){
-            throw new \Exception("Document should have 'type' property.");
+            throw new Exception("Document should have 'type' property.");
         }
         if(!isset($this->schemas[$document['type']])){
-            throw new \Exception("Document type ".$document['type']." do not match any of existing types :".implode(", ", array_keys($this->schemas)));
+            throw new Exception("Document type ".$document['type']." do not match any of existing types : ".implode(", ", array_keys($this->schemas)));
         }
         // we should be good now
         $schema = $this->schemas[$document['type']];
         // building document
         list($doc, $index) = $this->buildDoc($document, $schema);
-        $tmp = new \RecursiveIteratorIterator(new \RecursiveArrayIterator($index));
+        $tmp = new RecursiveIteratorIterator(new RecursiveArrayIterator($index));
         $index = [];
         foreach ($tmp as $k=>$v){
             if(isset($index[$k])){
@@ -97,7 +101,7 @@ class Index
      * memory optimized indexation of multiple files
      * @param array $documents
      * @return bool
-     * @throws \Exception
+     * @throws Exception
      */
     public function updateMultiple(array &$documents){
         foreach($documents as &$document){
@@ -111,6 +115,7 @@ class Index
     /**
      * @param $id
      * @return bool
+     * @throws Exception
      */
     public function delete($id){
         // remove document
@@ -143,15 +148,22 @@ class Index
     }
 
     /**
-     * @throws \Exception
+     * If you use this function be sure that your max execution time ini parameter is big enough to handle
+     * @throws Exception
+     * @return array
      */
     public function rebuild(){
         $documents = $this->documents->openAll();
+        $errors = [];
         foreach($documents as $document){
-            $this->update($document->getContent());
-            $document->unload();
+            try {
+                $this->update($document->getContent());
+            } catch(Exception $ex){
+                $errors[] = $ex->getMessage();
+            }
         }
         $this->clearCache();
+        return $errors;
     }
 
     public function clearCache(){
@@ -162,6 +174,7 @@ class Index
      * @param $query
      * @param array $filters
      * @return array
+     * @throws Exception
      */
     public function search($query, $filters = [])
     {
@@ -227,6 +240,7 @@ class Index
     /**
      * @param $id
      * @return mixed
+     * @throws Exception
      */
     public function getDocument($id)
     {
@@ -259,21 +273,72 @@ class Index
     /**
      * @param $token
      * @return array
+     * @throws Exception
      */
     private function find($token){
         if(empty($token)) return [];
         $file = $this->index->open(substr($token,0,1));
         $index = $file->getContent();
         if(!isset($index[$token])){
-            return $this->find(substr($token,0,-1));
+            // find approximative tokens
+            return $this->fuzzyFind($token);
         }
+
         return $index[$token];
+    }
+
+    /**
+     * @param $token
+     * @param bool $providePonderations
+     * @return array
+     * @throws Exception
+     */
+    public function suggest($token, $providePonderations = false){
+        if(empty($token)) return [];
+        $all = $this->index->open("all");
+        $tokens = array_keys($all->getContent());
+        $matching = [];
+        foreach($tokens as $indexToken){
+            if(strpos($indexToken, $token) !== false){
+                $matching[$indexToken] = strpos($indexToken, $token);
+            }
+        }
+        asort($matching);
+        if($providePonderations){
+            return $matching;
+        }
+        return array_keys($matching);
+    }
+
+    /**
+     * @param $token
+     * @return array
+     * @throws Exception
+     */
+    private function fuzzyFind($token){
+        if(empty($token)) return [];
+        $matching = $this->suggest($token, true);
+        $found = [];
+        if(!empty($matching)){
+            reset($matching);
+            $minPonderation = current($matching);
+            foreach($matching as $match => $ponderation){
+                if($ponderation == $minPonderation){
+                    $found = array_replace($found, $this->find($match));
+                }
+            }
+        } else {
+            $found = $this->find(substr($token,0,-1));
+        }
+
+        return $found;
     }
 
     /**
      * @param $data
      * @param $schema
      * @return array
+     * @throws Exception
      */
     private function buildDoc($data, $schema)
     {
@@ -293,14 +358,18 @@ class Index
      * @param $fieldName
      * @param $definition
      * @param $data
-     * @return array|\DateTime|mixed
+     * @return array|DateTime|mixed
+     * @throws Exception
      */
     private function buildField($fieldName, $definition, $data)
     {
         switch($definition['_type'])
         {
             case "datetime":
-                return new \DateTime(!empty($fieldName) ? $data[$fieldName] : $data);
+                if(is_a((!empty($fieldName) ? $data[$fieldName] : $data), DateTime::class)){
+                    return (!empty($fieldName) ? $data[$fieldName] : $data);
+                }
+                return new DateTime(!empty($fieldName) ? $data[$fieldName] : $data);
                 break;
             case "list":
                 $def = array_merge($definition, ["_type"=>$definition['_type.']]);
@@ -325,40 +394,46 @@ class Index
      * @param $fieldName
      * @param $definition
      * @param $data
-     * @return array|mixed|null|\RecursiveIteratorIterator|string
+     * @return array|mixed|null|RecursiveIteratorIterator|string
+     * @throws Exception
      */
     private function buildIndex($fieldName, $definition, $data)
     {
-            switch($definition['_type'])
-            {
-                case "datetime":
-                    $this->buildFilter(!empty($fieldName) ? $data[$fieldName] : $data, $definition);
-                    return $definition['_indexed'] ? $this->tokenize(new \DateTime(!empty($fieldName) ? $data[$fieldName] : $data), $definition) : "";
-                    break;
-                case "list":
-                    $def = array_merge($definition, ["_type"=>$definition['_type.']]);
-                    $tmp = [];
-					if(!empty($fieldName) ? !empty($data[$fieldName]) : !empty($data)){
-						foreach(!empty($fieldName) ? $data[$fieldName] : $data as $d){
-							$tmp[] = $this->buildIndex("", $def, $d);
-						}
-					}
-                    return $tmp;
-                    break;
-                case "array":
-                    return $this->buildDoc(!empty($fieldName) ? $data[$fieldName] : $data, $definition['_array'])[1];
-                    break;
-                default:
-                    $this->buildFilter(!empty($fieldName) ? $data[$fieldName] : $data, $definition);
-                    return $definition['_indexed'] ? $this->tokenize(!empty($fieldName) ? $data[$fieldName] : $data, $definition) : "";
-                    break;
-            }
+        switch($definition['_type'])
+        {
+            case "datetime":
+                $this->buildFilter(!empty($fieldName) ? $data[$fieldName] : $data, $definition);
+                if(is_a((!empty($fieldName) ? $data[$fieldName] : $data), DateTime::class)){
+                    $dt = (!empty($fieldName) ? $data[$fieldName] : $data);
+                } else {
+                    $dt = new DateTime(!empty($fieldName) ? $data[$fieldName] : $data);
+                }
+                return $definition['_indexed'] ? $this->tokenize($dt, $definition) : "";
+                break;
+            case "list":
+                $def = array_merge($definition, ["_type"=>$definition['_type.']]);
+                $tmp = [];
+                if(!empty($fieldName) ? !empty($data[$fieldName]) : !empty($data)){
+                    foreach(!empty($fieldName) ? $data[$fieldName] : $data as $d){
+                        $tmp[] = $this->buildIndex("", $def, $d);
+                    }
+                }
+                return $tmp;
+                break;
+            case "array":
+                return $this->buildDoc(!empty($fieldName) ? $data[$fieldName] : $data, $definition['_array'])[1];
+                break;
+            default:
+                $this->buildFilter(!empty($fieldName) ? $data[$fieldName] : $data, $definition);
+                return $definition['_indexed'] ? $this->tokenize(!empty($fieldName) ? $data[$fieldName] : $data, $definition) : "";
+                break;
+        }
     }
 
     /**
      * @param $data
      * @param $def
-     * @return array|null|\RecursiveIteratorIterator
+     * @return array|null|RecursiveIteratorIterator
      */
     private function tokenize($data, $def)
     {
@@ -369,7 +444,7 @@ class Index
             $data = [$data];
         }
         foreach($typeDef as $tokenizer){
-            $data = iterator_to_array(new \RecursiveIteratorIterator(new \RecursiveArrayIterator($tokenizer::tokenize($data))));
+            $data = iterator_to_array(new RecursiveIteratorIterator(new RecursiveArrayIterator($tokenizer::tokenize($data))));
         }
         $data = array_filter($data);
         $res = [];
@@ -386,7 +461,7 @@ class Index
     /**
      * @param $data
      * @param $def
-     * @return array|null|\RecursiveIteratorIterator
+     * @return void
      */
     private function buildFilter($data, $def)
     {
@@ -406,6 +481,11 @@ class Index
         $file->setContent($doc);
     }
 
+    /**
+     * @param $index
+     * @param $id
+     * @throws Exception
+     */
     private function updateIndex($index, $id)
     {
         $file = $this->index->open("all");
