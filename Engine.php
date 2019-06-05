@@ -76,13 +76,20 @@ class Engine
     }
 
     /**
-     * Suggest search terms
+     * Suggest last word for a search
      * @param $query
      * @return array
      * @throws Exception
      */
     public function suggest($query){
-        return $this->index->suggest($query);
+        $terms = explode(" ", $query);
+        $search = array_pop($terms);
+        $suggestions = $this->index->suggest($search);
+        $before = implode(" ",$terms);
+        foreach($suggestions as &$suggest){
+            $suggest = $before." ".$suggest;
+        }
+        return $suggestions;
     }
 
     /**
