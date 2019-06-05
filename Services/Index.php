@@ -184,7 +184,7 @@ class Index
         $filters = array_merge($default,$filters);
         if(!is_array($query)){
             // simple search
-            $tokens = array_keys($this->tokenize($query, ["_type"=>"search","_boost"=>0]));
+            $tokens = $this->tokenizeQuery($query);
 
             asort($tokens);
             $tmp = array_merge($tokens, $filters);
@@ -428,6 +428,10 @@ class Index
                 return $definition['_indexed'] ? $this->tokenize(!empty($fieldName) ? $data[$fieldName] : $data, $definition) : "";
                 break;
         }
+    }
+
+    public function tokenizeQuery($query){
+        return array_keys($this->tokenize($query, ["_type"=>"search","_boost"=>0]));
     }
 
     /**

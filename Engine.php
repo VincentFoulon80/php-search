@@ -84,12 +84,16 @@ class Engine
     public function suggest($query){
         $terms = explode(" ", $query);
         $search = array_pop($terms);
-        $suggestions = $this->index->suggest($search);
+        $tokens = $this->index->tokenizeQuery($search);
+        $suggestions = [];
+        foreach($tokens as $token) {
+            $suggestions = array_replace($suggestions, $this->index->suggest($token));
+        }
         $before = implode(" ",$terms);
         foreach($suggestions as &$suggest){
             $suggest = $before." ".$suggest;
         }
-        return $suggestions;
+        return array_chunk($suggestions, 10)[0];
     }
 
     /**
