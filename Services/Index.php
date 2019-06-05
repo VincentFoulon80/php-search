@@ -2,6 +2,7 @@
 
 namespace VFou\Search\Services;
 
+use Closure;
 use DateTime;
 use Exception;
 use RecursiveArrayIterator;
@@ -37,6 +38,12 @@ class Index
     private $types;
 
     /**
+     * @var int $updatingId
+     */
+    private $updatingId;
+
+
+    /**
      * Index constructor.
      * @param $config
      * @param $schemas
@@ -70,6 +77,7 @@ class Index
         if(!isset($document['id'])){
             throw new Exception("Document should have 'id' property.");
         }
+        $this->updatingId = $document['id'];
         if(!isset($document['type'])){
             throw new Exception("Document should have 'type' property.");
         }
@@ -148,9 +156,12 @@ class Index
     }
 
     /**
-     * If you use this function be sure that your max execution time ini parameter is big enough to handle
+     * WARNING If you use this function be sure to know what you are doing !
+     * Be sure that your max execution time ini parameter is big enough to handle.
+     * Main reason to use :
+     * - refresh fields after updating the engine so that you can use the new index feature
+     * @return array : errors encountered while rebuilding
      * @throws Exception
-     * @return array
      */
     public function rebuild(){
         $documents = $this->documents->openAll();
@@ -166,6 +177,9 @@ class Index
         return $errors;
     }
 
+    /**
+     * @throws Exception
+     */
     public function clearCache(){
         $this->cache->deleteAll(false);
     }
@@ -221,20 +235,30 @@ class Index
                 $i++;
             }
 
+            $facets = [];
+            if(isset($filters['facets'])){
+                foreach($filters['facets'] as $facet){
+                    if($this->index->open("facet_".$facet,false) !== null){
+                        $array = $this->index->open("facet_".$facet,false)->getContent();
+                        foreach($array as $name => $ids){
+                            $facets[$facet][$name] = count($ids);
+                        }
+                    }
+                }
+            }
+
             $response = [
                 "numFound" => count($results),
                 "maxScore" => !empty($results) ? max($results) : 0,
                 "documents" => $documents,
-                "facets" => []
+                "facets" => $facets
             ];
             $this->setCache($md5, $response);
-
-            return $response;
         } else {
             // precise search
             $response = [];
-            return $response;
         }
+        return $response;
     }
 
     /**
@@ -399,6 +423,7 @@ class Index
      */
     private function buildIndex($fieldName, $definition, $data)
     {
+        if(empty($definition['_name'])) $definition['_name'] = $fieldName;
         switch($definition['_type'])
         {
             case "datetime":
@@ -466,12 +491,16 @@ class Index
      * @param $data
      * @param $def
      * @return void
+     * @throws Exception
      */
     private function buildFilter($data, $def)
     {
         $filterable = isset($def['_filterable']) ? $def['_filterable'] : false;
         if($filterable){
-
+            $file = $this->index->open("facet_".$def['_name']);
+            $array = $file->getContent();
+            $array[$data][$this->updatingId] = $this->updatingId;
+            $file->setContent($array);
         }
     }
 
@@ -524,6 +553,7 @@ class Index
     /**
      * @param $identifier
      * @return mixed
+     * @throws Exception
      */
     private function getCache($identifier)
     {
