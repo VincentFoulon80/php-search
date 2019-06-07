@@ -8,7 +8,7 @@ This demo is made with a dataset of 1000 movies from 2006 and 2016. The results 
 install this library via Composer :
 
 ```
-composer require vfou/php-search 0.3
+composer require vfou/php-search 0.5
 ```
 
 # Quick start
