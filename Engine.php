@@ -115,7 +115,8 @@ class Engine
                 "var_dir" => $_SERVER['DOCUMENT_ROOT'].DIRECTORY_SEPARATOR."var",
                 "index_dir" => DIRECTORY_SEPARATOR."engine".DIRECTORY_SEPARATOR."index",
                 "documents_dir" => DIRECTORY_SEPARATOR."engine".DIRECTORY_SEPARATOR."documents",
-                "cache_dir" => DIRECTORY_SEPARATOR."engine".DIRECTORY_SEPARATOR."cache"
+                "cache_dir" => DIRECTORY_SEPARATOR."engine".DIRECTORY_SEPARATOR."cache",
+                "fuzzy_cost" => 1
             ],
             "schemas" => [
                 "example-post" => [

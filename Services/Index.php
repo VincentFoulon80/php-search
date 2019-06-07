@@ -13,6 +13,11 @@ use VFou\Search\Tokenizers\TokenizerInterface;
 class Index
 {
     /**
+     * @var array $config
+     */
+    private $config;
+
+    /**
      * @var Directory $index
      */
     private $index;
@@ -52,6 +57,7 @@ class Index
      */
     public function __construct($config, $schemas, $types)
     {
+        $this->config = $config;
         $this->schemas = $schemas;
         $this->types = $types;
         try {
@@ -223,6 +229,18 @@ class Index
             arsort($results);
             $documents = [];
 
+            $facets = [];
+            if(isset($filters['facets']) && !empty($filters['facets'])) {
+                foreach ($filters['facets'] as $facet) {
+                    if ($this->index->open("facet_" . $facet, false) !== null) {
+                        $array = $this->index->open("facet_" . $facet, false)->getContent();
+                        foreach ($array as $token => $ids) {
+                            $facets[$facet][$token] = count(array_intersect_key(array_flip($ids), $results));
+                        }
+                    }
+                }
+            }
+
             $i = 0;
             foreach($results as $doc => $score){
                 if($i < $filters['offset']){
@@ -235,8 +253,7 @@ class Index
                 $i++;
             }
 
-            $facets = [];
-            if(isset($filters['facets'])){
+            if(empty($query) && isset($filters['facets'])){
                 foreach($filters['facets'] as $facet){
                     if($this->index->open("facet_".$facet,false) !== null){
                         $array = $this->index->open("facet_".$facet,false)->getContent();
@@ -323,8 +340,9 @@ class Index
         $tokens = array_keys($all->getContent());
         $matching = [];
         foreach($tokens as $indexToken){
-            if(strpos($indexToken, $token) !== false){
-                $matching[$indexToken] = strpos($indexToken, $token);
+            $strPos = strpos($indexToken, $token);
+            if($strPos !== false){
+                $matching[$indexToken] = $strPos;
             }
         }
         asort($matching);
@@ -339,9 +357,11 @@ class Index
      * @return array
      * @throws Exception
      */
-    private function fuzzyFind($token){
-        if(empty($token)) return [];
+    private function fuzzyFind($token){if(empty($token)) return [];
         $matching = $this->suggest($token, true);
+        if(empty($matching)){
+            $matching = $this->approximate($token, $this->config['fuzzy_cost']);
+        }
         $found = [];
         if(!empty($matching)){
             reset($matching);
@@ -356,6 +376,51 @@ class Index
         }
 
         return $found;
+    }
+
+    /**
+     *
+     * @param $term
+     * @param $cost
+     * @param array $positions
+     * @return array|mixed
+     * @throws Exception
+     */
+    private function approximate($term, $cost, $positions = []){
+        $cached = $this->getCache("approx_".$term);
+        if(!empty($cached)){
+            return $cached;
+        }
+        $termL = strlen($term);
+        if($termL <= 1) return []; // we shouldn't approximate one character
+        $cost = max($cost, $termL-1); // The cost can't be more than the term's length itself
+        $tokens = array_keys($this->index->open("all")->getContent());
+        $matching = [];
+        for($i=0;$i<$termL;$i++){
+            $termToFind = substr_replace($term, '', $i,1);
+            foreach($tokens as $token){
+                $originalToken = $token;
+                if(!empty($positions)){
+                    foreach($positions as $position){
+                        $token = substr_replace($token, '', $position,1);
+                    }
+                }
+                if(strlen($token) >= $termL){
+                    $tokenToLink = substr_replace($token, '', $i,1);
+                    $strPos = strpos($tokenToLink,$termToFind);
+                    if($strPos !== false){
+                        $matching[$originalToken] = $strPos;
+                    }
+                }
+            }
+            if($cost > 1){
+                $positions[$cost] = $i;
+                $matching = array_replace($matching, $this->approximate($termToFind,$cost-1, $positions));
+            }
+        }
+        asort($matching);
+        $this->setCache("approx_".$term, $matching);
+        return $matching;
     }
 
     /**
