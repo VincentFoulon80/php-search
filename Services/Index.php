@@ -357,7 +357,9 @@ class Index
      * @return array
      * @throws Exception
      */
-    private function fuzzyFind($token){if(empty($token)) return [];
+    private function fuzzyFind($token)
+    {
+        if(empty($token)) return [];
         $matching = $this->suggest($token, true);
         if(empty($matching)){
             $matching = $this->approximate($token, $this->config['fuzzy_cost']);
@@ -393,7 +395,7 @@ class Index
         }
         $termL = strlen($term);
         if($termL <= 1) return []; // we shouldn't approximate one character
-        $cost = max($cost, $termL-1); // The cost can't be more than the term's length itself
+        if($cost > $termL-1) $cost = $termL-1; // The cost can't be more than the term's length itself
         $tokens = array_keys($this->index->open("all")->getContent());
         $matching = [];
         for($i=0;$i<$termL;$i++){

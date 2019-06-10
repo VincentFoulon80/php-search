@@ -7,6 +7,7 @@ use VFou\Search\Services\Index;
 use VFou\Search\Tokenizers\DateFormatTokenizer;
 use VFou\Search\Tokenizers\DateSplitTokenizer;
 use VFou\Search\Tokenizers\LowerCaseTokenizer;
+use VFou\Search\Tokenizers\singleQuoteTokenizer;
 use VFou\Search\Tokenizers\TrimPunctuationTokenizer;
 use VFou\Search\Tokenizers\WhiteSpaceTokenizer;
 
@@ -174,6 +175,7 @@ class Engine
                 "_default" => [
                     LowerCaseTokenizer::class,
                     WhiteSpaceTokenizer::class,
+                    singleQuoteTokenizer::class,
                     TrimPunctuationTokenizer::class
                 ]
             ]
