@@ -11,7 +11,7 @@ class RomanianStemmingTokenizer implements TokenizerInterface
     {
         return array_map(function($value){
             $stemmer = new Romanian();
-            return $stemmer->stem($value);
+            return [$stemmer->stem($value), $value];
         }, $data);
     }
 }

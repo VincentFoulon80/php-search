@@ -11,7 +11,7 @@ class PortugueseStemmingTokenizer implements TokenizerInterface
     {
         return array_map(function($value){
             $stemmer = new Portuguese();
-            return $stemmer->stem($value);
+            return [$stemmer->stem($value), $value];
         }, $data);
     }
 }

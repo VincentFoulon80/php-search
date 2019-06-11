@@ -65,7 +65,7 @@ class Index
             $this->documents = new Directory($config['var_dir'].$config['documents_dir'], false);
             $this->cache = new Directory($config['var_dir'].$config['cache_dir']);
         } catch (Exception $e) {
-            throw new Exception("Unable to load Index : ".$e->getMessage());
+            throw new Exception('Unable to load Index : '.$e->getMessage());
         }
 
     }
@@ -137,7 +137,7 @@ class Index
         // clear the index of every references
         $allFiles = $this->index->openAll();
         foreach($allFiles as $file){
-            if($file->getName() == "all") continue;
+            if($file->getName() == 'all') continue;
             $tokens = $file->getContent();
             $tokensToRemove = [];
             foreach($tokens as &$token){
@@ -198,10 +198,7 @@ class Index
      */
     public function search($query, $filters = [])
     {
-        $default = [
-            "offset" => 0
-        ];
-        $filters = array_merge($default,$filters);
+        if(isset($filters['offset'])) $filters['offset'] = 0;
         if(!is_array($query)){
             // simple search
             $tokens = $this->tokenizeQuery($query);
@@ -232,8 +229,8 @@ class Index
             $facets = [];
             if(isset($filters['facets']) && !empty($filters['facets'])) {
                 foreach ($filters['facets'] as $facet) {
-                    if ($this->index->open("facet_" . $facet, false) !== null) {
-                        $array = $this->index->open("facet_" . $facet, false)->getContent();
+                    if ($this->index->open('facet_' . $facet, false) !== null) {
+                        $array = $this->index->open('facet_' . $facet, false)->getContent();
                         foreach ($array as $token => $ids) {
                             $facets[$facet][$token] = count(array_intersect_key(array_flip($ids), $results));
                         }
@@ -255,8 +252,8 @@ class Index
 
             if(empty($query) && isset($filters['facets'])){
                 foreach($filters['facets'] as $facet){
-                    if($this->index->open("facet_".$facet,false) !== null){
-                        $array = $this->index->open("facet_".$facet,false)->getContent();
+                    if($this->index->open('facet_'.$facet,false) !== null){
+                        $array = $this->index->open('facet_'.$facet,false)->getContent();
                         foreach($array as $name => $ids){
                             $facets[$facet][$name] = count($ids);
                         }
@@ -265,10 +262,10 @@ class Index
             }
 
             $response = [
-                "numFound" => count($results),
-                "maxScore" => !empty($results) ? max($results) : 0,
-                "documents" => $documents,
-                "facets" => $facets
+                'numFound' => count($results),
+                'maxScore' => !empty($results) ? max($results) : 0,
+                'documents' => $documents,
+                'facets' => $facets
             ];
             $this->setCache($md5, $response);
         } else {
@@ -336,7 +333,7 @@ class Index
      */
     public function suggest($token, $providePonderations = false){
         if(empty($token)) return [];
-        $all = $this->index->open("all");
+        $all = $this->index->open('all');
         $tokens = array_keys($all->getContent());
         $matching = [];
         foreach($tokens as $indexToken){
@@ -389,14 +386,14 @@ class Index
      * @throws Exception
      */
     private function approximate($term, $cost, $positions = []){
-        $cached = $this->getCache("approx_".$term);
+        $cached = $this->getCache('approx_'.$term);
         if(!empty($cached)){
             return $cached;
         }
         $termL = strlen($term);
         if($termL <= 1) return []; // we shouldn't approximate one character
         if($cost > $termL-1) $cost = $termL-1; // The cost can't be more than the term's length itself
-        $tokens = array_keys($this->index->open("all")->getContent());
+        $tokens = array_keys($this->index->open('all')->getContent());
         $matching = [];
         for($i=0;$i<$termL;$i++){
             $termToFind = substr_replace($term, '', $i,1);
@@ -421,7 +418,7 @@ class Index
             }
         }
         asort($matching);
-        $this->setCache("approx_".$term, $matching);
+        $this->setCache('approx_'.$term, $matching);
         return $matching;
     }
 
@@ -456,23 +453,23 @@ class Index
     {
         switch($definition['_type'])
         {
-            case "datetime":
+            case 'datetime':
                 if(is_a((!empty($fieldName) ? $data[$fieldName] : $data), DateTime::class)){
                     return (!empty($fieldName) ? $data[$fieldName] : $data);
                 }
                 return new DateTime(!empty($fieldName) ? $data[$fieldName] : $data);
                 break;
-            case "list":
-                $def = array_merge($definition, ["_type"=>$definition['_type.']]);
+            case 'list':
+                $def = array_merge($definition, ['_type'=>$definition['_type.']]);
                 $tmp = [];
                 if(!empty($fieldName) ? !empty($data[$fieldName]) : !empty($data)){
                     foreach(!empty($fieldName) ? $data[$fieldName] : $data as $d){
-                        $tmp[] = $this->buildField("", $def, $d);
+                        $tmp[] = $this->buildField('', $def, $d);
                     }
                 }
                 return $tmp;
                 break;
-            case "array":
+            case 'array':
                 return $this->buildDoc(!empty($fieldName) ? $data[$fieldName] : $data, $definition['_array'])[0];
                 break;
             default:
@@ -493,7 +490,7 @@ class Index
         if(empty($definition['_name'])) $definition['_name'] = $fieldName;
         switch($definition['_type'])
         {
-            case "datetime":
+            case 'datetime':
                 $this->buildFilter(!empty($fieldName) ? $data[$fieldName] : $data, $definition);
                 if(is_a((!empty($fieldName) ? $data[$fieldName] : $data), DateTime::class)){
                     $dt = (!empty($fieldName) ? $data[$fieldName] : $data);
@@ -502,28 +499,28 @@ class Index
                 }
                 return $definition['_indexed'] ? $this->tokenize($dt, $definition) : "";
                 break;
-            case "list":
-                $def = array_merge($definition, ["_type"=>$definition['_type.']]);
+            case 'list':
+                $def = array_merge($definition, ['_type'=>$definition['_type.']]);
                 $tmp = [];
                 if(!empty($fieldName) ? !empty($data[$fieldName]) : !empty($data)){
                     foreach(!empty($fieldName) ? $data[$fieldName] : $data as $d){
-                        $tmp[] = $this->buildIndex("", $def, $d);
+                        $tmp[] = $this->buildIndex('', $def, $d);
                     }
                 }
                 return $tmp;
                 break;
-            case "array":
+            case 'array':
                 return $this->buildDoc(!empty($fieldName) ? $data[$fieldName] : $data, $definition['_array'])[1];
                 break;
             default:
                 $this->buildFilter(!empty($fieldName) ? $data[$fieldName] : $data, $definition);
-                return $definition['_indexed'] ? $this->tokenize(!empty($fieldName) ? $data[$fieldName] : $data, $definition) : "";
+                return $definition['_indexed'] ? $this->tokenize(!empty($fieldName) ? $data[$fieldName] : $data, $definition) : '';
                 break;
         }
     }
 
     public function tokenizeQuery($query){
-        return array_keys($this->tokenize($query, ["_type"=>"search","_boost"=>0]));
+        return array_keys($this->tokenize($query, ['_type'=>'search','_boost'=>0]));
     }
 
     /**
@@ -564,7 +561,7 @@ class Index
     {
         $filterable = isset($def['_filterable']) ? $def['_filterable'] : false;
         if($filterable){
-            $file = $this->index->open("facet_".$def['_name']);
+            $file = $this->index->open('facet_'.$def['_name']);
             $array = $file->getContent();
             $array[$data][$this->updatingId] = $this->updatingId;
             $file->setContent($array);
@@ -588,7 +585,7 @@ class Index
      */
     private function updateIndex($index, $id)
     {
-        $file = $this->index->open("all");
+        $file = $this->index->open('all');
         $all = $file->getContent();
         foreach($index as $token=>$score){
             $t = substr($token,0,1);

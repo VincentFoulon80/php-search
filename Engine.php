@@ -83,16 +83,16 @@ class Engine
      * @throws Exception
      */
     public function suggest($query){
-        $terms = explode(" ", $query);
+        $terms = explode(' ', $query);
         $search = array_pop($terms);
         $tokens = $this->index->tokenizeQuery($search);
         $suggestions = [];
         foreach($tokens as $token) {
             $suggestions = array_replace($suggestions, $this->index->suggest($token));
         }
-        $before = implode(" ",$terms);
+        $before = implode(' ',$terms);
         foreach($suggestions as &$suggest){
-            $suggest = $before." ".$suggest;
+            $suggest = $before.' '.$suggest;
         }
         return array_chunk($suggestions, 10)[0];
     }
@@ -112,67 +112,67 @@ class Engine
      */
     private function getDefaultConfig(){
         return [
-            "config" => [
-                "var_dir" => $_SERVER['DOCUMENT_ROOT'].DIRECTORY_SEPARATOR."var",
-                "index_dir" => DIRECTORY_SEPARATOR."engine".DIRECTORY_SEPARATOR."index",
-                "documents_dir" => DIRECTORY_SEPARATOR."engine".DIRECTORY_SEPARATOR."documents",
-                "cache_dir" => DIRECTORY_SEPARATOR."engine".DIRECTORY_SEPARATOR."cache",
-                "fuzzy_cost" => 1
+            'config' => [
+                'var_dir' => $_SERVER['DOCUMENT_ROOT'].DIRECTORY_SEPARATOR.'var',
+                'index_dir' => DIRECTORY_SEPARATOR.'engine'.DIRECTORY_SEPARATOR.'index',
+                'documents_dir' => DIRECTORY_SEPARATOR.'engine'.DIRECTORY_SEPARATOR.'documents',
+                'cache_dir' => DIRECTORY_SEPARATOR.'engine'.DIRECTORY_SEPARATOR.'cache',
+                'fuzzy_cost' => 1
             ],
-            "schemas" => [
-                "example-post" => [
-                    "title" => [
-                        "_type" => "string",
-                        "_indexed" => true,
-                        "_boost" => 10
+            'schemas' => [
+                'example-post' => [
+                    'title' => [
+                        '_type' => 'string',
+                        '_indexed' => true,
+                        '_boost' => 10
                     ],
-                    "content" => [
-                        "_type" => "text",
-                        "_indexed" => true,
-                        "_boost" => 0.5
+                    'content' => [
+                        '_type' => 'text',
+                        '_indexed' => true,
+                        '_boost' => 0.5
                     ],
-                    "date" => [
-                        "_type" => "datetime",
-                        "_indexed" => true,
-                        "_boost" => 2
+                    'date' => [
+                        '_type' => 'datetime',
+                        '_indexed' => true,
+                        '_boost' => 2
                     ],
-                    "categories" => [
-                        "_type" => "list",
-                        "_type." => "string",
-                        "_indexed" => true,
-                        "_filterable" => true,
-                        "_boost" => 6
+                    'categories' => [
+                        '_type' => 'list',
+                        '_type.' => 'string',
+                        '_indexed' => true,
+                        '_filterable' => true,
+                        '_boost' => 6
                     ],
-                    "comments" => [
-                        "_type" => "list",
-                        "_type." => "array",
-                        "_array" => [
-                            "author" => [
-                                '_type' => "string",
-                                "_indexed" => true,
-                                "_filterable" => true,
-                                "_boost" => 1
+                    'comments' => [
+                        '_type' => 'list',
+                        '_type.' => 'array',
+                        '_array' => [
+                            'author' => [
+                                '_type' => 'string',
+                                '_indexed' => true,
+                                '_filterable' => true,
+                                '_boost' => 1
                             ],
-                            "date" => [
-                                "_type" => "datetime",
-                                "_indexed" => true,
-                                "_boost" => 0
+                            'date' => [
+                                '_type' => 'datetime',
+                                '_indexed' => true,
+                                '_boost' => 0
                             ],
-                            "message" => [
-                                "_type" => "text",
-                                "_indexed" => true,
-                                "_boost" => 0.1
+                            'message' => [
+                                '_type' => 'text',
+                                '_indexed' => true,
+                                '_boost' => 0.1
                             ]
                         ]
                     ]
                 ]
             ],
-            "types" => [
-                "datetime" => [
+            'types' => [
+                'datetime' => [
                     DateFormatTokenizer::class,
                     DateSplitTokenizer::class
                 ],
-                "_default" => [
+                '_default' => [
                     LowerCaseTokenizer::class,
                     WhiteSpaceTokenizer::class,
                     singleQuoteTokenizer::class,

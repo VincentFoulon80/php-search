@@ -11,7 +11,7 @@ class ItalianStemmingTokenizer implements TokenizerInterface
     {
         return array_map(function($value){
             $stemmer = new Italian();
-            return $stemmer->stem($value);
+            return [$stemmer->stem($value), $value];
         }, $data);
     }
 }

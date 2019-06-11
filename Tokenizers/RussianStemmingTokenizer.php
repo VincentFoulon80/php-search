@@ -11,7 +11,7 @@ class RussianStemmingTokenizer implements TokenizerInterface
     {
         return array_map(function($value){
             $stemmer = new Russian();
-            return $stemmer->stem($value);
+            return [$stemmer->stem($value), $value];
         }, $data);
     }
 }
