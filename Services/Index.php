@@ -198,7 +198,7 @@ class Index
      */
     public function search($query, $filters = [])
     {
-        if(isset($filters['offset'])) $filters['offset'] = 0;
+        if(!isset($filters['offset'])) $filters['offset'] = 0;
         if(!is_array($query)){
             // simple search
             $tokens = $this->tokenizeQuery($query);
