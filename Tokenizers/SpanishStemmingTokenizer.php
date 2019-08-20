@@ -9,9 +9,9 @@ class SpanishStemmingTokenizer implements TokenizerInterface
 
     public static function tokenize($data)
     {
-        return array_map(function($value){
-            $stemmer = new Spanish();
-            return [$stemmer->stem($value), $value];
+        $stemmer = new Spanish();
+        return array_map(function($value)use($stemmer){
+            return array_unique([$stemmer->stem($value), $value]);
         }, $data);
     }
 }

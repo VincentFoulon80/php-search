@@ -176,7 +176,7 @@ class Index
             try {
                 $this->update($document->getContent());
             } catch(Exception $ex){
-                $errors[] = $ex->getMessage();
+                $errors[] = "file '".$document->getName()."' : ".$ex->getMessage();
             }
         }
         $this->clearCache();
@@ -213,65 +213,69 @@ class Index
             }
 
             $results = [];
-            foreach($tokens as $token){
-                $tmp = $this->find($token);
-                foreach($tmp as $k => $v){
-                    if(!isset($results[$k])){
-                        $results[$k] = $v;
-                    } else {
-                        $results[$k] += $v;
-                    }
-                }
-            }
-            arsort($results);
-            $documents = [];
-
-            $facets = [];
-            if(isset($filters['facets']) && !empty($filters['facets'])) {
-                foreach ($filters['facets'] as $facet) {
-                    if ($this->index->open('facet_' . $facet, false) !== null) {
-                        $array = $this->index->open('facet_' . $facet, false)->getContent();
-                        foreach ($array as $token => $ids) {
-                            $facets[$facet][$token] = count(array_intersect_key(array_flip($ids), $results));
+            if(!empty($tokens)){
+                foreach($tokens as $token){
+                    $tmp = $this->find($token);
+                    foreach($tmp as $k => $v){
+                        if(!isset($results[$k])){
+                            $results[$k] = $v;
+                        } else {
+                            $results[$k] += $v;
                         }
                     }
                 }
-            }
-
-            $i = 0;
-            foreach($results as $doc => $score){
-                if($i < $filters['offset']){
-                    $i++;
-                    continue;
-                }
-                if(isset($filters['limit']) && $i >= $filters['offset']+$filters['limit']) break;
-                $documents[$doc] = $this->documents->open($doc)->getContent();
-                $documents[$doc]['_score'] = $score;
-                $i++;
-            }
-
-            if(empty($query) && isset($filters['facets'])){
-                foreach($filters['facets'] as $facet){
-                    if($this->index->open('facet_'.$facet,false) !== null){
-                        $array = $this->index->open('facet_'.$facet,false)->getContent();
-                        foreach($array as $name => $ids){
-                            $facets[$facet][$name] = count($ids);
-                        }
-                    }
+            } else {
+                $results = array_flip($this->documents->scan());
+                foreach($results as $key=>&$value){
+                    $value = 0;
                 }
             }
 
-            $response = [
-                'numFound' => count($results),
-                'maxScore' => !empty($results) ? max($results) : 0,
-                'documents' => $documents,
-                'facets' => $facets
-            ];
-            $this->setCache($md5, $response);
+
         } else {
             // precise search
-            $response = [];
+            $results = [];
+            $allTokens = [];
+
+            asort($query);
+            asort($filters);
+            $tmp = [
+                "query" => $query,
+                "filters" => $filters
+            ];
+            $md5 = "precise_".md5(serialize($tmp));
+            $cached = $this->getCache($md5);
+            if (!empty($cached)) {
+                return $cached;
+            }
+            foreach($query as $field=>$value) {
+                $tokens = $this->tokenizeQuery($value);
+                $allTokens = array_merge($allTokens, $tokens);
+                if ($this->index->open('values_' . $field, false) !== null) {
+                    $array = $this->index->open('values_' . $field, false)->getContent();
+                    foreach ($tokens as $token) {
+                        $tmp = $array[$token] ?? [];
+                        foreach ($tmp as $k => $v) {
+                            if (!isset($results[$k])) {
+                                $results[$k] = $v;
+                            } else {
+                                $results[$k] += $v;
+                            }
+                        }
+                    }
+                }
+            }
         }
+        arsort($results);
+        $facets = $this->processFacets($results, $query, $filters);
+        $documents = $this->processResults($results, $filters);
+        $response = [
+            'numFound' => count($results),
+            'maxScore' => !empty($results) ? max($results) : 0,
+            'documents' => $documents,
+            'facets' => $facets
+        ];
+        $this->setCache($md5, $response);
         return $response;
     }
 
@@ -537,7 +541,11 @@ class Index
             $data = [$data];
         }
         foreach($typeDef as $tokenizer){
-            $data = iterator_to_array(new RecursiveIteratorIterator(new RecursiveArrayIterator($tokenizer::tokenize($data))));
+            $tmp = $tokenizer::tokenize($data);
+            $data = [];
+            array_walk_recursive($tmp, function($e)use(&$data){
+                $data[] = $e;
+            });
         }
         $data = array_filter($data);
         $res = [];
@@ -564,6 +572,15 @@ class Index
             $file = $this->index->open('facet_'.$def['_name']);
             $array = $file->getContent();
             $array[$data][$this->updatingId] = $this->updatingId;
+            $file->setContent($array);
+        }
+        $file = $this->index->open("values_".$def['_name']);
+        $array = $file->getContent();
+        $tokens = $this->tokenize($data, $def);
+        foreach($tokens as $token => $score){
+            $array[$token][$this->updatingId] = $score;
+        }
+        if(!empty($array)){
             $file->setContent($array);
         }
     }
@@ -623,6 +640,65 @@ class Index
     {
         $file = $this->cache->open($identifier);
         return $file->getContent();
+    }
+
+    /**
+     * @param $filters
+     * @param array $results
+     * @return array
+     * @throws Exception
+     */
+    private function processResults(array $results, $filters): array
+    {
+        $documents = [];
+        $i = 0;
+        foreach ($results as $doc => $score) {
+            if ($i < $filters['offset']) {
+                $i++;
+                continue;
+            }
+            if (isset($filters['limit']) && $i >= $filters['offset'] + $filters['limit']) break;
+            $documents[$doc] = $this->documents->open($doc)->getContent();
+            $documents[$doc]['_score'] = $score;
+            $i++;
+        }
+        return $documents;
+    }
+
+    /**
+     * @param array $results
+     * @param $query
+     * @param $filters
+     * @return array
+     * @throws Exception
+     */
+    private function processFacets(array $results, $query, $filters): array
+    {
+        $facets = [];
+        if(isset($filters['facets']) && !empty($filters['facets'])){
+            if(!empty($query)){
+                foreach ($filters['facets'] as $facet) {
+                    if ($this->index->open('facet_' . $facet, false) !== null) {
+                        $array = $this->index->open('facet_' . $facet, false)->getContent();
+                        foreach ($array as $token => $ids) {
+                            $facets[$facet][$token] = count(array_intersect_key(array_flip($ids), $results));
+                        }
+                        arsort($facets[$facet]);
+                    }
+                }
+            } else {
+                foreach ($filters['facets'] as $facet) {
+                    if ($this->index->open('facet_' . $facet, false) !== null) {
+                        $array = $this->index->open('facet_' . $facet, false)->getContent();
+                        foreach ($array as $name => $ids) {
+                            $facets[$facet][$name] = count($ids);
+                        }
+                        arsort($facets[$facet]);
+                    }
+                }
+            }
+        }
+        return $facets;
     }
 
 }

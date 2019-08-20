@@ -9,9 +9,9 @@ class NorwegianStemmingTokenizer implements TokenizerInterface
 
     public static function tokenize($data)
     {
-        return array_map(function($value){
-            $stemmer = new Norwegian();
-            return [$stemmer->stem($value), $value];
+        $stemmer = new Norwegian();
+        return array_map(function($value)use($stemmer){
+            return array_unique([$stemmer->stem($value), $value]);
         }, $data);
     }
 }

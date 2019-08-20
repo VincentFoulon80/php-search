@@ -9,9 +9,9 @@ class FrenchStemmingTokenizer implements TokenizerInterface
 
     public static function tokenize($data)
     {
-        return array_map(function($value){
-            $stemmer = new French();
-            return [$stemmer->stem($value), $value];
+        $stemmer = new French();
+        return array_map(function($value)use($stemmer){
+            return array_unique([$stemmer->stem($value), $value]);
         }, $data);
     }
 }

@@ -53,9 +53,7 @@ class Directory
      */
     public function open($filename, $createIfNotExist = true){
         if(!isset($this->files[$filename])){
-            if(file_exists($this->path.$filename)){
-                $this->files[$filename] = new File($this->path, $filename, $this->keepOpen);
-            } elseif($createIfNotExist){
+            if(file_exists($this->path.$filename) || $createIfNotExist){
                 $this->files[$filename] = new File($this->path, $filename, $this->keepOpen);
             } else {
                 return null;
@@ -69,6 +67,16 @@ class Directory
      */
     public function delete($file){
         $this->open($file)->delete();
+    }
+
+    public function scan(){
+        $all = [];
+        foreach(scandir($this->path) as $file){
+            if(is_file($this->path.$file)){
+                $all[] = $file;
+            }
+        }
+        return $all;
     }
 
     /**
