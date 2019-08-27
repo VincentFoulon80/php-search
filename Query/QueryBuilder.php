@@ -10,6 +10,7 @@ class QueryBuilder
     private $limit;
     private $offset;
     private $order;
+    private $facets;
 
     /**
      * QueryBuilder constructor.
@@ -21,6 +22,7 @@ class QueryBuilder
         $this->limit = 10;
         $this->offset = 0;
         $this->order = [];
+        $this->facets = [];
     }
 
     /**
@@ -69,6 +71,10 @@ class QueryBuilder
         return $this;
     }
 
+    public function addFacet($field){
+        $this->facets[$field] = $field;
+    }
+
     public function getQuery()
     {
         return $this->search;
@@ -78,7 +84,8 @@ class QueryBuilder
         return [
             'limit' => $this->limit,
             'offset' => $this->offset,
-            'order' => $this->order
+            'order' => $this->order,
+            'facets' => $this->facets
         ];
     }
 }
