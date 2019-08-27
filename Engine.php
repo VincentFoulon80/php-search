@@ -3,6 +3,7 @@
 namespace VFou\Search;
 
 use Exception;
+use VFou\Search\Query\QueryBuilder;
 use VFou\Search\Services\Index;
 use VFou\Search\Tokenizers\DateFormatTokenizer;
 use VFou\Search\Tokenizers\DateSplitTokenizer;
@@ -67,12 +68,15 @@ class Engine
 
     /**
      * perform a search
-     * @param $query
+     * @param string|array|QueryBuilder $query
      * @param array $filters
      * @return array
      * @throws Exception
      */
     public function search($query, $filters = []){
+        if(is_a($query, QueryBuilder::class)){
+            return $this->index->search($query->getQuery(), $query->getFilters());
+        }
         return $this->index->search($query, $filters);
     }
 

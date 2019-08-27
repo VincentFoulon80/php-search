@@ -651,7 +651,6 @@ class Index
         if(isset($filters['order']) && !empty($filters['order'])){
             $nonOrdered = $results;
             $results = [];
-            // $sortingValue = 10^(count($filters['order'])-1);
             foreach($filters['order'] as $field => $direction){
                 if($this->index->open('exact_'.$field, false) !== null){
                     $array = $this->index->open('exact_'.$field, false)->getContent();
@@ -668,7 +667,6 @@ class Index
                         }
                     }
                 }
-                // $sortingValue /= 10;
             }
         }
         $documents = [];
