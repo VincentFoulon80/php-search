@@ -215,14 +215,7 @@ class Index
             $results = [];
             if(!empty($tokens)){
                 foreach($tokens as $token){
-                    $tmp = $this->find($token);
-                    foreach($tmp as $k => $v){
-                        if(!isset($results[$k])){
-                            $results[$k] = $v;
-                        } else {
-                            $results[$k] += $v;
-                        }
-                    }
+                    $this->computeScore($results, $this->find($token));
                 }
             } else {
                 $results = array_flip($this->documents->scan());
@@ -235,7 +228,6 @@ class Index
         } else {
             // precise search
             $results = [];
-            $allTokens = [];
 
             asort($query);
             asort($filters);
@@ -250,18 +242,18 @@ class Index
             }
             foreach($query as $field=>$value) {
                 $tokens = $this->tokenizeQuery($value);
-                $allTokens = array_merge($allTokens, $tokens);
-                if ($this->index->open('values_' . $field, false) !== null) {
-                    $array = $this->index->open('values_' . $field, false)->getContent();
-                    foreach ($tokens as $token) {
-                        $tmp = $array[$token] ?? [];
-                        foreach ($tmp as $k => $v) {
-                            if (!isset($results[$k])) {
-                                $results[$k] = $v;
-                            } else {
-                                $results[$k] += $v;
-                            }
+                if(substr($field,-1) == "%"){
+                    $field = substr($field, 0, -1);
+                    if ($this->index->open('values_' . $field, false) !== null) {
+                        $array = $this->index->open('values_' . $field, false)->getContent();
+                        foreach ($tokens as $token) {
+                            $this->computeScore($results, $array[$token] ?? []);
                         }
+                    }
+                } else {
+                    if ($this->index->open('exact_' . $field, false) !== null) {
+                        $array = $this->index->open('exact_' . $field, false)->getContent();
+                        $this->computeScore($results, $array[$value] ?? []);
                     }
                 }
             }
@@ -575,6 +567,12 @@ class Index
             $file->setContent($array);
         }
         $file = $this->index->open("values_".$def['_name']);
+        $exact = $this->index->open("exact_".$def['_name']);
+        $array = $exact->getContent();
+        $array[$data][$this->updatingId] = 1;
+        if(!empty($array)){
+            $exact->setContent($array);
+        }
         $array = $file->getContent();
         $tokens = $this->tokenize($data, $def);
         foreach($tokens as $token => $score){
@@ -650,6 +648,29 @@ class Index
      */
     private function processResults(array $results, $filters): array
     {
+        if(isset($filters['order']) && !empty($filters['order'])){
+            $nonOrdered = $results;
+            $results = [];
+            // $sortingValue = 10^(count($filters['order'])-1);
+            foreach($filters['order'] as $field => $direction){
+                if($this->index->open('exact_'.$field, false) !== null){
+                    $array = $this->index->open('exact_'.$field, false)->getContent();
+                    if($direction === 'ASC'){
+                        ksort($array);
+                    } elseif($direction === 'DESC'){
+                        krsort($array);
+                    }
+                    foreach($array as $key => $ids){
+                        foreach($ids as $id => $score){
+                            if(in_array($id, array_keys($nonOrdered))){
+                                $results[$id] = $score;
+                            }
+                        }
+                    }
+                }
+                // $sortingValue /= 10;
+            }
+        }
         $documents = [];
         $i = 0;
         foreach ($results as $doc => $score) {
@@ -699,6 +720,21 @@ class Index
             }
         }
         return $facets;
+    }
+
+    /**
+     * @param array $results
+     * @param array $scoreArray
+     */
+    private function computeScore(array &$results, array $scoreArray)
+    {
+        foreach ($scoreArray as $k => $v) {
+            if (!isset($results[$k])) {
+                $results[$k] = $v;
+            } else {
+                $results[$k] += $v;
+            }
+        }
     }
 
 }
