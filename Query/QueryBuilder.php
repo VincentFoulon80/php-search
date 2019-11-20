@@ -31,7 +31,11 @@ class QueryBuilder
      */
     public function search($query = "")
     {
-        $this->search = $query;
+        if(is_array($this->search)){
+            $this->search['%'] = $query;
+        } else {
+            $this->search = $query;
+        }
         return $this;
     }
 
@@ -49,7 +53,11 @@ class QueryBuilder
     public function addExactSearch($field, $terms)
     {
         if(!is_array($this->search)){
-            $this->search = [];
+            if(!empty($this->search)){
+                $this->search = ['%'=>$this->search];
+            } else {
+                $this->search = [];
+            }
         }
         $this->search[$field] = $terms;
         return $this;

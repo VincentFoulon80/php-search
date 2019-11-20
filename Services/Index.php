@@ -240,7 +240,17 @@ class Index
             if (!empty($cached)) {
                 return $cached;
             }
+            $regularResult = [];
+            if(isset($query['%'])){
+                $tokens = $this->tokenizeQuery($query['%']);
+                if(!empty($tokens)){
+                    foreach($tokens as $token){
+                        $this->computeScore($regularResult, $this->find($token));
+                    }
+                }
+            }
             foreach($query as $field=>$value) {
+                if($field == '%') continue;
                 $tokens = $this->tokenizeQuery($value);
                 if(substr($field,-1) == "%"){
                     $field = substr($field, 0, -1);
@@ -256,6 +266,9 @@ class Index
                         $this->computeScore($results, $array[$value] ?? []);
                     }
                 }
+            }
+            if(!empty($regularResult)){
+                $results = array_intersect_key($regularResult, $results);
             }
         }
         arsort($results);
@@ -669,9 +682,9 @@ class Index
                         krsort($array);
                     }
                     foreach($array as $key => $ids){
-                        foreach($ids as $id => $score){
+                        foreach($ids as $id => $falseScore){
                             if(in_array($id, array_keys($nonOrdered))){
-                                $results[$id] = $score;
+                                $results[$id] = $nonOrdered[$id];
                             }
                         }
                     }
