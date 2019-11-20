@@ -2,6 +2,7 @@
 
 namespace VFou\Search;
 
+use DateTime;
 use Exception;
 use VFou\Search\Query\QueryBuilder;
 use VFou\Search\Services\Index;
@@ -121,7 +122,10 @@ class Engine
                 'index_dir' => DIRECTORY_SEPARATOR.'engine'.DIRECTORY_SEPARATOR.'index',
                 'documents_dir' => DIRECTORY_SEPARATOR.'engine'.DIRECTORY_SEPARATOR.'documents',
                 'cache_dir' => DIRECTORY_SEPARATOR.'engine'.DIRECTORY_SEPARATOR.'cache',
-                'fuzzy_cost' => 1
+                'fuzzy_cost' => 1,
+                'serializableObjects' => [
+                    DateTime::class => function($datetime) { return $datetime->format(DATE_ATOM); }
+                ]
             ],
             'schemas' => [
                 'example-post' => [

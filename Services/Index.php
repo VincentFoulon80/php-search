@@ -571,7 +571,11 @@ class Index
         $exact = $this->index->open("exact_".$def['_name']);
         $array = $exact->getContent();
         if(is_object($data)){
-            throw new Exception("Building Filter Error : field ".$def['_name']." of document ID ".$this->updatingId." is an object. Expected string or number.");
+            if(isset($this->config['serializableObjects'][get_class($data)])){
+                $data = $this->config['serializableObjects'][get_class($data)]($data);
+            } else {
+                throw new Exception("Field ".$def['_name']." of document ID ".$this->updatingId." is an object of type ".get_class($data)." that is not supported by the currently configured SerializableObjects.");
+            }
         }
         $array[$data][$this->updatingId] = 1;
         if(!empty($array)){
