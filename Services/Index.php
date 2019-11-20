@@ -98,9 +98,9 @@ class Index
         $index = [];
         foreach ($tmp as $k=>$v){
             if(isset($index[$k])){
-                $index[$k] += $v;
+                $index[$k] += !empty($v) ? $v:0;
             } else {
-                $index[$k] = $v;
+                $index[$k] = !empty($v) ? $v:0;
             }
         }
 
@@ -529,6 +529,7 @@ class Index
     {
         /** @var TokenizerInterface[] $typeDef */
         $typeDef = isset($this->types[$def['_type']]) ? $this->types[$def['_type']] : $this->types['_default'];
+        if(!isset($def['_boost'])) $def['_boost'] = 1;
 
         if(!is_array($data)){
             $data = [$data];
