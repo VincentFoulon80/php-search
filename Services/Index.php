@@ -484,6 +484,7 @@ class Index
     private function buildIndex($fieldName, $definition, $data)
     {
         if(empty($definition['_name'])) $definition['_name'] = $fieldName;
+        if(!isset($definition['_indexed'])) $definition['_indexed'] = false;
         switch($definition['_type'])
         {
             case 'datetime':
@@ -569,6 +570,9 @@ class Index
         $file = $this->index->open("values_".$def['_name']);
         $exact = $this->index->open("exact_".$def['_name']);
         $array = $exact->getContent();
+        if(is_object($data)){
+            throw new Exception("Building Filter Error : field ".$def['_name']." of document ID ".$this->updatingId." is an object. Expected string or number.");
+        }
         $array[$data][$this->updatingId] = 1;
         if(!empty($array)){
             $exact->setContent($array);
