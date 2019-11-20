@@ -59,7 +59,7 @@ class QueryBuilder
                 $this->search = [];
             }
         }
-        $this->search[$field] = $terms;
+        $this->search[$field][] = $terms;
         return $this;
     }
 

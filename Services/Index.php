@@ -249,21 +249,23 @@ class Index
                     }
                 }
             }
-            foreach($query as $field=>$value) {
+            foreach($query as $field=>$values) {
                 if($field == '%') continue;
-                $tokens = $this->tokenizeQuery($value);
-                if(substr($field,-1) == "%"){
-                    $field = substr($field, 0, -1);
-                    if ($this->index->open('values_' . $field, false) !== null) {
-                        $array = $this->index->open('values_' . $field, false)->getContent();
-                        foreach ($tokens as $token) {
-                            $this->computeScore($results, $array[$token] ?? []);
+                foreach($values as $value){
+                    if(substr($field,-1) == "%"){
+                        $field = substr($field, 0, -1);
+                        if ($this->index->open('values_' . $field, false) !== null) {
+                            $array = $this->index->open('values_' . $field, false)->getContent();
+                            $tokens = $this->tokenizeQuery($value);
+                            foreach ($tokens as $token) {
+                                $this->computeScore($results, $array[$token] ?? []);
+                            }
                         }
-                    }
-                } else {
-                    if ($this->index->open('exact_' . $field, false) !== null) {
-                        $array = $this->index->open('exact_' . $field, false)->getContent();
-                        $this->computeScore($results, $array[$value] ?? []);
+                    } else {
+                        if ($this->index->open('exact_' . $field, false) !== null) {
+                            $array = $this->index->open('exact_' . $field, false)->getContent();
+                            $this->computeScore($results, $array[$value] ?? []);
+                        }
                     }
                 }
             }
