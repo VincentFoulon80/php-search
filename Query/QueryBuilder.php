@@ -75,6 +75,14 @@ class QueryBuilder
         $this->facets[$field] = $field;
     }
 
+    public function setLimit(int $limit){
+        $this->limit = $limit;
+    }
+
+    public function setOffset(int $offset){
+        $this->offset = $offset;
+    }
+
     public function getQuery()
     {
         return $this->search;
