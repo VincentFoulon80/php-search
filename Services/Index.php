@@ -662,7 +662,6 @@ class Index
         }
         $file = $this->index->open("values_".$def['_name']);
         $exact = $this->index->open("exact_".$def['_name']);
-        $doc = $this->index->open('docs/'.$this->updatingId);
         $array = $exact->getContent();
         if(is_object($data)){
             if(isset($this->config['serializableObjects'][get_class($data)])){
@@ -682,17 +681,6 @@ class Index
         }
         if(!empty($array)){
             $file->setContent($array);
-        }
-        $array = $doc->getContent();
-        foreach($tokens as $token => $score){
-            if(isset($array[$token])){
-                $array[$token] += $score;
-            } else {
-                $array[$token] = $score;
-            }
-        }
-        if(!empty($array)){
-            $doc->setContent($array);
         }
     }
 
