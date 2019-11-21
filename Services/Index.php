@@ -249,9 +249,23 @@ class Index
                     }
                 }
             }
+            $tempStorage = [];
+            $gtOrltUsed = [];
             foreach($query as $field=>$values) {
+                $origField = $field;
                 if($field == '%') continue;
                 foreach($values as $value){
+                    if(in_array(substr($field, -1), ['<','>','='])){
+                        $field = substr($field, 0,-1);
+                        if(in_array(substr($field, -1), ['<','>','='])){
+                            $field = substr($field, 0,-1);
+                        }
+                        if(isset($gtOrltUsed[$field])){
+                            $tempStorage = $results;
+                            $results = [];
+                        }
+                        $field = $origField;
+                    }
                     switch(substr($field,-1)){
                         case '%': // process regular query
                             $field = substr($field, 0, -1);
@@ -298,8 +312,8 @@ class Index
                                     $array = $this->index->open('exact_' . $field, false)->getContent();
                                     ksort($array);
                                     foreach($array as $k=>$v){
-                                        $this->computeScore($results, $array[$k] ?? []);
                                         if($k > $value) break;
+                                        $this->computeScore($results, $array[$k] ?? []);
                                     }
                                 }
                             } elseif(substr($field, -2) == '>=') {
@@ -323,6 +337,12 @@ class Index
                                 $array = $this->index->open('exact_' . $field, false)->getContent();
                                 $this->computeScore($results, $array[$value] ?? []);
                             }
+                    }
+                    if(in_array(substr($origField, -1), ['<','>','='])){ // process multiple iterations of <, >, <= or >= searches
+                        if(isset($gtOrltUsed[$field])){
+                            $results = array_intersect_key($tempStorage, $results); // make it an AND condition
+                        }
+                        $gtOrltUsed[$field] = 1;
                     }
                 }
             }
@@ -642,6 +662,7 @@ class Index
         }
         $file = $this->index->open("values_".$def['_name']);
         $exact = $this->index->open("exact_".$def['_name']);
+        $doc = $this->index->open('docs/'.$this->updatingId);
         $array = $exact->getContent();
         if(is_object($data)){
             if(isset($this->config['serializableObjects'][get_class($data)])){
@@ -661,6 +682,17 @@ class Index
         }
         if(!empty($array)){
             $file->setContent($array);
+        }
+        $array = $doc->getContent();
+        foreach($tokens as $token => $score){
+            if(isset($array[$token])){
+                $array[$token] += $score;
+            } else {
+                $array[$token] = $score;
+            }
+        }
+        if(!empty($array)){
+            $doc->setContent($array);
         }
     }
 

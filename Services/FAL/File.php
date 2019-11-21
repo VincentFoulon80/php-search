@@ -47,7 +47,7 @@ class File
     public function __construct($directory, $name, $keepOpen = true)
     {
         $this->directory = $directory;
-        $this->name = str_replace("/","_",$name);
+        $this->name = str_replace(DIRECTORY_SEPARATOR,"_",$name);
         $this->deleted = false;
         $this->loaded = false;
         $this->keepOpen = $keepOpen;
