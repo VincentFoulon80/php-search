@@ -72,6 +72,19 @@ class QueryBuilder
         return $this->addExactSearch($field.'%', $terms);
     }
 
+    public function lesserSearch($field, $terms){
+        return $this->addExactSearch($field.'<', $terms);
+    }
+    public function lesserEqualSearch($field, $terms){
+        return $this->addExactSearch($field.'<=', $terms);
+    }
+    public function greaterSearch($field, $terms){
+        return $this->addExactSearch($field.'>', $terms);
+    }
+    public function greaterEqualSearch($field, $terms){
+        return $this->addExactSearch($field.'>=', $terms);
+    }
+
     public function orderBy($field, $order = 'ASC'){
         $this->order = [
             $field => $order

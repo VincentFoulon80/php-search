@@ -252,20 +252,71 @@ class Index
             foreach($query as $field=>$values) {
                 if($field == '%') continue;
                 foreach($values as $value){
-                    if(substr($field,-1) == "%"){
-                        $field = substr($field, 0, -1);
-                        if ($this->index->open('values_' . $field, false) !== null) {
-                            $array = $this->index->open('values_' . $field, false)->getContent();
-                            $tokens = $this->tokenizeQuery($value);
-                            foreach ($tokens as $token) {
-                                $this->computeScore($results, $array[$token] ?? []);
+                    switch(substr($field,-1)){
+                        case '%': // process regular query
+                            $field = substr($field, 0, -1);
+                            if ($this->index->open('values_' . $field, false) !== null) {
+                                $array = $this->index->open('values_' . $field, false)->getContent();
+                                $tokens = $this->tokenizeQuery($value);
+                                foreach ($tokens as $token) {
+                                    $this->computeScore($results, $array[$token] ?? []);
+                                }
                             }
-                        }
-                    } else {
-                        if ($this->index->open('exact_' . $field, false) !== null) {
-                            $array = $this->index->open('exact_' . $field, false)->getContent();
-                            $this->computeScore($results, $array[$value] ?? []);
-                        }
+                            break;
+                        case '<': // process "Lesser than" query
+                            $field = substr($field, 0, -1);
+                            if ($this->index->open('exact_' . $field, false) !== null) {
+                                $array = $this->index->open('exact_' . $field, false)->getContent();
+                                ksort($array);
+                                foreach($array as $k=>$v){
+                                    if($k == $value) break;
+                                    $this->computeScore($results, $array[$k] ?? []);
+                                }
+                            }
+                            break;
+                        case '>': // process "Greater than" query
+                            $field = substr($field, 0, -1);
+                            if ($this->index->open('exact_' . $field, false) !== null) {
+                                $array = $this->index->open('exact_' . $field, false)->getContent();
+                                ksort($array);
+                                $found = false;
+                                foreach($array as $k=>$v){
+                                    if($k == $value) $found = true;
+                                    if(!$found) continue;
+                                    if($k != $value) $this->computeScore($results, $array[$k] ?? []);
+                                }
+                            }
+                            break;
+                        case '=': // will process <= or >=
+                            if(substr($field, -2) == '<='){
+                                $field = substr($field, 0, -2);
+                                if ($this->index->open('exact_' . $field, false) !== null) {
+                                    $array = $this->index->open('exact_' . $field, false)->getContent();
+                                    ksort($array);
+                                    foreach($array as $k=>$v){
+                                        $this->computeScore($results, $array[$k] ?? []);
+                                        if($k == $value) break;
+                                    }
+                                }
+                            } elseif(substr($field, -2) == '>=') {
+                                $field = substr($field, 0, -2);
+                                if ($this->index->open('exact_' . $field, false) !== null) {
+                                    $array = $this->index->open('exact_' . $field, false)->getContent();
+                                    ksort($array);
+                                    $found = false;
+                                    foreach($array as $k=>$v){
+                                        if($k == $value) $found = true;
+                                        if(!$found) continue;
+                                        $this->computeScore($results, $array[$k] ?? []);
+                                    }
+                                }
+                            }
+                            break;
+                        default: // process exact search
+                            if ($this->index->open('exact_' . $field, false) !== null) {
+                                $array = $this->index->open('exact_' . $field, false)->getContent();
+                                $this->computeScore($results, $array[$value] ?? []);
+                            }
                     }
                 }
             }
