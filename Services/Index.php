@@ -255,6 +255,7 @@ class Index
                     switch(substr($field,-1)){
                         case '%': // process regular query
                             $field = substr($field, 0, -1);
+                            if(is_object($value) && isset($this->config['serializableObjects'][get_class($value)])) $value = $this->config['serializableObjects'][get_class($value)]($value);
                             if ($this->index->open('values_' . $field, false) !== null) {
                                 $array = $this->index->open('values_' . $field, false)->getContent();
                                 $tokens = $this->tokenizeQuery($value);
@@ -265,6 +266,7 @@ class Index
                             break;
                         case '<': // process "Lesser than" query
                             $field = substr($field, 0, -1);
+                            if(is_object($value) && isset($this->config['serializableObjects'][get_class($value)])) $value = $this->config['serializableObjects'][get_class($value)]($value);
                             if ($this->index->open('exact_' . $field, false) !== null) {
                                 $array = $this->index->open('exact_' . $field, false)->getContent();
                                 ksort($array);
@@ -276,6 +278,7 @@ class Index
                             break;
                         case '>': // process "Greater than" query
                             $field = substr($field, 0, -1);
+                            if(is_object($value) && isset($this->config['serializableObjects'][get_class($value)])) $value = $this->config['serializableObjects'][get_class($value)]($value);
                             if ($this->index->open('exact_' . $field, false) !== null) {
                                 $array = $this->index->open('exact_' . $field, false)->getContent();
                                 ksort($array);
@@ -290,6 +293,7 @@ class Index
                         case '=': // will process <= or >=
                             if(substr($field, -2) == '<='){
                                 $field = substr($field, 0, -2);
+                                if(is_object($value) && isset($this->config['serializableObjects'][get_class($value)])) $value = $this->config['serializableObjects'][get_class($value)]($value);
                                 if ($this->index->open('exact_' . $field, false) !== null) {
                                     $array = $this->index->open('exact_' . $field, false)->getContent();
                                     ksort($array);
@@ -300,6 +304,7 @@ class Index
                                 }
                             } elseif(substr($field, -2) == '>=') {
                                 $field = substr($field, 0, -2);
+                                if(is_object($value) && isset($this->config['serializableObjects'][get_class($value)])) $value = $this->config['serializableObjects'][get_class($value)]($value);
                                 if ($this->index->open('exact_' . $field, false) !== null) {
                                     $array = $this->index->open('exact_' . $field, false)->getContent();
                                     ksort($array);
@@ -313,6 +318,7 @@ class Index
                             }
                             break;
                         default: // process exact search
+                            if(is_object($value) && isset($this->config['serializableObjects'][get_class($value)])) $value = $this->config['serializableObjects'][get_class($value)]($value);
                             if ($this->index->open('exact_' . $field, false) !== null) {
                                 $array = $this->index->open('exact_' . $field, false)->getContent();
                                 $this->computeScore($results, $array[$value] ?? []);

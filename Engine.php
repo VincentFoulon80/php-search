@@ -124,7 +124,7 @@ class Engine
                 'cache_dir' => DIRECTORY_SEPARATOR.'engine'.DIRECTORY_SEPARATOR.'cache',
                 'fuzzy_cost' => 1,
                 'serializableObjects' => [
-                    DateTime::class => function($datetime) { return $datetime->format(DATE_ATOM); }
+                    DateTime::class => function($datetime) { return $datetime->getTimestamp(); }
                 ]
             ],
             'schemas' => [
