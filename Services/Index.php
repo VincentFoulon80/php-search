@@ -269,7 +269,7 @@ class Index
                                 $array = $this->index->open('exact_' . $field, false)->getContent();
                                 ksort($array);
                                 foreach($array as $k=>$v){
-                                    if($k == $value) break;
+                                    if($k >= $value) break;
                                     $this->computeScore($results, $array[$k] ?? []);
                                 }
                             }
@@ -281,7 +281,7 @@ class Index
                                 ksort($array);
                                 $found = false;
                                 foreach($array as $k=>$v){
-                                    if($k == $value) $found = true;
+                                    if($k >= $value) $found = true;
                                     if(!$found) continue;
                                     if($k != $value) $this->computeScore($results, $array[$k] ?? []);
                                 }
@@ -295,7 +295,7 @@ class Index
                                     ksort($array);
                                     foreach($array as $k=>$v){
                                         $this->computeScore($results, $array[$k] ?? []);
-                                        if($k == $value) break;
+                                        if($k > $value) break;
                                     }
                                 }
                             } elseif(substr($field, -2) == '>=') {
@@ -305,7 +305,7 @@ class Index
                                     ksort($array);
                                     $found = false;
                                     foreach($array as $k=>$v){
-                                        if($k == $value) $found = true;
+                                        if($k >= $value) $found = true;
                                         if(!$found) continue;
                                         $this->computeScore($results, $array[$k] ?? []);
                                     }
