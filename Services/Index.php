@@ -274,11 +274,12 @@ class Index
     private function processAdvancedSearch($query, &$results)
     {
         $gtOrltUsed = [];
+        $first = true;
         foreach($query as $field=>$values) {
             if($field == '%') return;
             $not = false;
             $mode = '';
-            $mergeMode = 'OR';
+            $mergeMode = 'AND';
             $trueField = $field;
             $fieldResults = [];
             if(substr($field, 0,1) === '-'){
@@ -382,14 +383,25 @@ class Index
                 $gtOrltUsed[$trueField] = 1;
             }
             if($not){
+                if($first){
+                    $results = array_flip($this->documents->scan());
+                    foreach($results as $key=>&$value){
+                        $value = 0;
+                    }
+                }
                 $results = array_diff_key($results, $fieldResults);
             } else {
                 if($mergeMode === 'OR'){
                     $this->computeScore($results, $fieldResults);
                 } elseif($mergeMode === 'AND') {
-                    $results = array_intersect_key($fieldResults, $results);
+                    if($first) {
+                        $results = $fieldResults;
+                    } else {
+                        $results = array_intersect_key($results, $fieldResults);
+                    }
                 }
             }
+            $first = false;
         }
     }
 
