@@ -84,6 +84,9 @@ class QueryBuilder
     public function greaterEqualSearch($field, $terms){
         return $this->addExactSearch($field.'>=', $terms);
     }
+    public function notSearch($field, $terms){
+        return $this->addExactSearch('-'.$field, $terms);
+    }
 
     public function orderBy($field, $order = 'ASC'){
         $this->order = [
