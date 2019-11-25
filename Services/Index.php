@@ -229,7 +229,6 @@ class Index
             // precise search
             $results = [];
 
-            asort($query);
             asort($filters);
             $tmp = [
                 "query" => $query,
@@ -275,7 +274,6 @@ class Index
     private function processAdvancedSearch($query, &$results)
     {
         $gtOrltUsed = [];
-        krsort($query);
         foreach($query as $field=>$values) {
             if($field == '%') return;
             $not = false;
@@ -290,7 +288,7 @@ class Index
             if(in_array(substr($trueField, -1), ['<','>','='])) {
                 $mode = substr($trueField, -1);
                 $trueField = substr($trueField, 0,-1);
-                if(in_array(substr($trueField, -1), ['<','>'])){
+                if(in_array(substr($trueField, -1), ['<','>','!'])){
                     $mode = substr($trueField, -1).$mode;
                     $trueField = substr($trueField, 0,-1);
                 }
@@ -355,6 +353,16 @@ class Index
                             foreach($array as $k=>$v){
                                 if($k >= $value) $found = true;
                                 if(!$found) continue;
+                                $this->computeScore($fieldResults, $array[$k] ?? []);
+                            }
+                        }
+                        break;
+                    case '!=':
+                        if(is_object($value) && isset($this->config['serializableObjects'][get_class($value)])) $value = $this->config['serializableObjects'][get_class($value)]($value);
+                        if ($this->index->open('exact_' . $trueField, false) !== null) {
+                            $array = $this->index->open('exact_' . $trueField, false)->getContent();
+                            foreach($array as $k=>$v){
+                                if($k == $value) continue;
                                 $this->computeScore($fieldResults, $array[$k] ?? []);
                             }
                         }
