@@ -423,9 +423,9 @@ class Index
      */
     private function getAdvancedResult(string $mode, $field, $value, $fieldResults = []): array
     {
+        if (is_object($value) && isset($this->config['serializableObjects'][get_class($value)])) $value = $this->config['serializableObjects'][get_class($value)]($value);
         switch ($mode) {
             case '%': // process regular query
-                if (is_object($value) && isset($this->config['serializableObjects'][get_class($value)])) $value = $this->config['serializableObjects'][get_class($value)]($value);
                 if ($this->index->open('values_' . $field, false) !== null) {
                     $array = $this->index->open('values_' . $field, false)->getContent();
                     $tokens = $this->tokenizeQuery($value);
@@ -435,9 +435,9 @@ class Index
                 }
                 break;
             case '<': // process "Lesser than" query
-                if (is_object($value) && isset($this->config['serializableObjects'][get_class($value)])) $value = $this->config['serializableObjects'][get_class($value)]($value);
                 if ($this->index->open('exact_' . $field, false) !== null) {
                     $array = $this->index->open('exact_' . $field, false)->getContent();
+                    $array = array_filter($array, function($a){ return $a === ""; });
                     ksort($array);
                     foreach ($array as $k => $v) {
                         if ($k >= $value) break;
@@ -446,9 +446,9 @@ class Index
                 }
                 break;
             case '>': // process "Greater than" query
-                if (is_object($value) && isset($this->config['serializableObjects'][get_class($value)])) $value = $this->config['serializableObjects'][get_class($value)]($value);
                 if ($this->index->open('exact_' . $field, false) !== null) {
                     $array = $this->index->open('exact_' . $field, false)->getContent();
+                    $array = array_filter($array, function($a){ return $a === ""; });
                     ksort($array);
                     $found = false;
                     foreach ($array as $k => $v) {
@@ -459,9 +459,9 @@ class Index
                 }
                 break;
             case '<=': // process "Lesser than or Equal" query
-                if (is_object($value) && isset($this->config['serializableObjects'][get_class($value)])) $value = $this->config['serializableObjects'][get_class($value)]($value);
                 if ($this->index->open('exact_' . $field, false) !== null) {
                     $array = $this->index->open('exact_' . $field, false)->getContent();
+                    $array = array_filter($array, function($a){ return $a === ""; });
                     ksort($array);
                     foreach ($array as $k => $v) {
                         if ($k > $value) break;
@@ -470,9 +470,9 @@ class Index
                 }
                 break;
             case '>=': // process "Greater than or Equal" query
-                if (is_object($value) && isset($this->config['serializableObjects'][get_class($value)])) $value = $this->config['serializableObjects'][get_class($value)]($value);
                 if ($this->index->open('exact_' . $field, false) !== null) {
                     $array = $this->index->open('exact_' . $field, false)->getContent();
+                    $array = array_filter($array, function($a){ return $a === ""; });
                     ksort($array);
                     $found = false;
                     foreach ($array as $k => $v) {
@@ -483,7 +483,6 @@ class Index
                 }
                 break;
             case '!=':
-                if (is_object($value) && isset($this->config['serializableObjects'][get_class($value)])) $value = $this->config['serializableObjects'][get_class($value)]($value);
                 if ($this->index->open('exact_' . $field, false) !== null) {
                     $array = $this->index->open('exact_' . $field, false)->getContent();
                     foreach ($array as $k => $v) {
@@ -493,7 +492,6 @@ class Index
                 }
                 break;
             default: // process exact search
-                if (is_object($value) && isset($this->config['serializableObjects'][get_class($value)])) $value = $this->config['serializableObjects'][get_class($value)]($value);
                 if ($this->index->open('exact_' . $field, false) !== null) {
                     $array = $this->index->open('exact_' . $field, false)->getContent();
                     $this->computeScore($fieldResults, $array[$value] ?? []);

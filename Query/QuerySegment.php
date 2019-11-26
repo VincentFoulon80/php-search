@@ -145,6 +145,7 @@ class QuerySegment
                 continue;
             }
             foreach($value as $v){
+                if(is_a($v, \DateTime::class)) $v = $v->format(DATE_ATOM);
                 $rtn[] = ' '.$field.':"'.$v.'"';
             }
         }
