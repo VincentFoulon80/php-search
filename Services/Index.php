@@ -437,7 +437,7 @@ class Index
             case '<': // process "Lesser than" query
                 if ($this->index->open('exact_' . $field, false) !== null) {
                     $array = $this->index->open('exact_' . $field, false)->getContent();
-                    $array = array_filter($array, function($a){ return $a === ""; });
+                    $array = array_filter($array, function($a){ return $a !== ""; });
                     ksort($array);
                     foreach ($array as $k => $v) {
                         if ($k >= $value) break;
@@ -448,7 +448,7 @@ class Index
             case '>': // process "Greater than" query
                 if ($this->index->open('exact_' . $field, false) !== null) {
                     $array = $this->index->open('exact_' . $field, false)->getContent();
-                    $array = array_filter($array, function($a){ return $a === ""; });
+                    $array = array_filter($array, function($a){ return $a !== ""; });
                     ksort($array);
                     $found = false;
                     foreach ($array as $k => $v) {
@@ -461,7 +461,7 @@ class Index
             case '<=': // process "Lesser than or Equal" query
                 if ($this->index->open('exact_' . $field, false) !== null) {
                     $array = $this->index->open('exact_' . $field, false)->getContent();
-                    $array = array_filter($array, function($a){ return $a === ""; });
+                    $array = array_filter($array, function($a){ return $a !== ""; });
                     ksort($array);
                     foreach ($array as $k => $v) {
                         if ($k > $value) break;
@@ -472,7 +472,7 @@ class Index
             case '>=': // process "Greater than or Equal" query
                 if ($this->index->open('exact_' . $field, false) !== null) {
                     $array = $this->index->open('exact_' . $field, false)->getContent();
-                    $array = array_filter($array, function($a){ return $a === ""; });
+                    $array = array_filter($array, function($a){ return $a !== ""; });
                     ksort($array);
                     $found = false;
                     foreach ($array as $k => $v) {
