@@ -14,7 +14,7 @@ class TrimPunctuationTokenizer implements TokenizerInterface
     public static function tokenize($data)
     {
         return array_map(function($elem){
-            return trim($elem, ",?;.:!"); // TODO : preg_replace
+            return trim($elem, ",?;.:!/\\\""); // TODO : preg_replace
         }, $data);
     }
 }
