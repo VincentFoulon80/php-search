@@ -7,6 +7,7 @@ use DateTime;
 use Exception;
 use RecursiveArrayIterator;
 use RecursiveIteratorIterator;
+use VFou\Search\Query\QuerySegment;
 use VFou\Search\Services\FAL\Directory;
 use VFou\Search\Tokenizers\TokenizerInterface;
 
@@ -199,7 +200,7 @@ class Index
     public function search($query, $filters = [])
     {
         if(!isset($filters['offset'])) $filters['offset'] = 0;
-        if(!is_array($query)){
+        if(is_string($query)){
             // simple search
             $tokens = $this->tokenizeQuery($query);
 
@@ -240,15 +241,30 @@ class Index
                 return $cached;
             }
             $regularResult = [];
-            if(isset($query['%'])){
-                $tokens = $this->tokenizeQuery($query['%']);
-                if(!empty($tokens)){
-                    foreach($tokens as $token){
-                        $this->computeScore($regularResult, $this->find($token));
+            if(is_a($query, QuerySegment::class)){
+                /** @var QuerySegment $query */
+                if($query->type == QuerySegment::Q_SEARCH){
+                    $tokens = $this->tokenizeQuery($query->getValue());
+                    if(!empty($tokens)){
+                        foreach($tokens as $token){
+                            $this->computeScore($regularResult, $this->find($token));
+                        }
+                    }
+                    $query = $query->getChildren()[0];
+                }
+                $results = $this->depileSegment($query);
+            } else {
+                /** @var array $query */
+                if(isset($query['%'])){
+                    $tokens = $this->tokenizeQuery($query['%']);
+                    if(!empty($tokens)){
+                        foreach($tokens as $token){
+                            $this->computeScore($regularResult, $this->find($token));
+                        }
                     }
                 }
+                $this->processAdvancedSearch($query, $results);
             }
-            $this->processAdvancedSearch($query, $results);
             if(!empty($regularResult)){
                 $results = array_intersect_key($regularResult, $results);
             }
@@ -267,6 +283,63 @@ class Index
     }
 
     /**
+     * @param QuerySegment $qs
+     * @return array|string
+     * @throws Exception
+     */
+    private function depileSegment(QuerySegment $qs){
+        $results = [];
+        $first = true;
+        foreach($qs->getSegment() as $field=>$value){
+            list($not, $mode, $trueField) = $this->describeField($field);
+            if(is_a($value, QuerySegment::class)){
+                $currentResult = $this->depileSegment($value);
+            } else {
+                $currentResult = [];
+                $subFirst = true;
+                foreach($value as $v){
+                    $subResult = $this->getAdvancedResult($mode, $trueField, $v);
+                    $this->mergeSegments($qs, $currentResult,$subFirst,$not,$subResult);
+                    $subFirst = false;
+                }
+            }
+            $this->mergeSegments($qs, $results, $first, $not, $currentResult);
+            $first = false;
+        }
+        return $results;
+    }
+
+    /**
+     * @param QuerySegment $qs
+     * @param $results
+     * @param bool $first
+     * @param $not
+     * @param $currentResult
+     * @return array
+     */
+    private function mergeSegments(QuerySegment $qs, &$results, bool $first, $not, $currentResult)
+    {
+        if ($not) {
+            if ($first) {
+                $results = array_flip($this->documents->scan());
+                foreach ($results as $k => &$v) {
+                    $v = 0;
+                }
+            }
+            $currentResult = array_diff_key($results, $currentResult);
+        }
+        if ($qs->type === QuerySegment::Q_OR) {
+            $this->computeScore($results, $currentResult);
+        } elseif ($qs->type === QuerySegment::Q_AND) {
+            if ($first) {
+                $results = $currentResult;
+            } else {
+                $results = array_intersect_key($results, $currentResult);
+            }
+        }
+    }
+
+    /**
      * @param $query
      * @param $results
      * @throws Exception
@@ -277,104 +350,11 @@ class Index
         $first = true;
         foreach($query as $field=>$values) {
             if($field == '%') return;
-            $not = false;
-            $mode = '';
-            $mergeMode = 'AND';
-            $trueField = $field;
             $fieldResults = [];
-            if(substr($field, 0,1) === '-'){
-                $not = true;
-                $trueField = substr($field, 1);
-            }
-            if(in_array(substr($trueField, -1), ['<','>','='])) {
-                $mode = substr($trueField, -1);
-                $trueField = substr($trueField, 0,-1);
-                if(in_array(substr($trueField, -1), ['<','>','!'])){
-                    $mode = substr($trueField, -1).$mode;
-                    $trueField = substr($trueField, 0,-1);
-                }
-            }
-            if(substr($field, -1) == "%"){
-                $mode = '%';
-                $trueField = substr($trueField, 0,-1);
-            }
+            $mergeMode = 'AND';
+            list($not, $mode, $trueField) = $this->describeField($field);
             foreach($values as $value){
-                switch($mode){
-                    case '%': // process regular query
-                        if(is_object($value) && isset($this->config['serializableObjects'][get_class($value)])) $value = $this->config['serializableObjects'][get_class($value)]($value);
-                        if ($this->index->open('values_' . $trueField, false) !== null) {
-                            $array = $this->index->open('values_' . $trueField, false)->getContent();
-                            $tokens = $this->tokenizeQuery($value);
-                            foreach ($tokens as $token) {
-                                $this->computeScore($fieldResults, $array[$token] ?? []);
-                            }
-                        }
-                        break;
-                    case '<': // process "Lesser than" query
-                        if(is_object($value) && isset($this->config['serializableObjects'][get_class($value)])) $value = $this->config['serializableObjects'][get_class($value)]($value);
-                        if ($this->index->open('exact_' . $trueField, false) !== null) {
-                            $array = $this->index->open('exact_' . $trueField, false)->getContent();
-                            ksort($array);
-                            foreach($array as $k=>$v){
-                                if($k >= $value) break;
-                                $this->computeScore($fieldResults, $array[$k] ?? []);
-                            }
-                        }
-                        break;
-                    case '>': // process "Greater than" query
-                        if(is_object($value) && isset($this->config['serializableObjects'][get_class($value)])) $value = $this->config['serializableObjects'][get_class($value)]($value);
-                        if ($this->index->open('exact_' . $trueField, false) !== null) {
-                            $array = $this->index->open('exact_' . $trueField, false)->getContent();
-                            ksort($array);
-                            $found = false;
-                            foreach($array as $k=>$v){
-                                if($k >= $value) $found = true;
-                                if(!$found) continue;
-                                if($k != $value) $this->computeScore($fieldResults, $array[$k] ?? []);
-                            }
-                        }
-                        break;
-                    case '<=': // process "Lesser than or Equal" query
-                        if(is_object($value) && isset($this->config['serializableObjects'][get_class($value)])) $value = $this->config['serializableObjects'][get_class($value)]($value);
-                        if ($this->index->open('exact_' . $trueField, false) !== null) {
-                            $array = $this->index->open('exact_' . $trueField, false)->getContent();
-                            ksort($array);
-                            foreach($array as $k=>$v){
-                                if($k > $value) break;
-                                $this->computeScore($fieldResults, $array[$k] ?? []);
-                            }
-                        }
-                        break;
-                    case '>=': // process "Greater than or Equal" query
-                        if(is_object($value) && isset($this->config['serializableObjects'][get_class($value)])) $value = $this->config['serializableObjects'][get_class($value)]($value);
-                        if ($this->index->open('exact_' . $trueField, false) !== null) {
-                            $array = $this->index->open('exact_' . $trueField, false)->getContent();
-                            ksort($array);
-                            $found = false;
-                            foreach($array as $k=>$v){
-                                if($k >= $value) $found = true;
-                                if(!$found) continue;
-                                $this->computeScore($fieldResults, $array[$k] ?? []);
-                            }
-                        }
-                        break;
-                    case '!=':
-                        if(is_object($value) && isset($this->config['serializableObjects'][get_class($value)])) $value = $this->config['serializableObjects'][get_class($value)]($value);
-                        if ($this->index->open('exact_' . $trueField, false) !== null) {
-                            $array = $this->index->open('exact_' . $trueField, false)->getContent();
-                            foreach($array as $k=>$v){
-                                if($k == $value) continue;
-                                $this->computeScore($fieldResults, $array[$k] ?? []);
-                            }
-                        }
-                        break;
-                    default: // process exact search
-                        if(is_object($value) && isset($this->config['serializableObjects'][get_class($value)])) $value = $this->config['serializableObjects'][get_class($value)]($value);
-                        if ($this->index->open('exact_' . $trueField, false) !== null) {
-                            $array = $this->index->open('exact_' . $trueField, false)->getContent();
-                            $this->computeScore($fieldResults, $array[$value] ?? []);
-                        }
-                }
+                $fieldResults = $this->getAdvancedResult($mode, $trueField, $value, $fieldResults);
             }
             if(!empty($mode) && $mode != '%'){ // process multiple iterations of <, >, <= or >= searches
                 if(isset($gtOrltUsed[$trueField])){
@@ -403,6 +383,123 @@ class Index
             }
             $first = false;
         }
+    }
+
+    /**
+     * @param $field
+     * @return array
+     */
+    private function describeField($field): array
+    {
+        $not = false;
+        $mode = '';
+        $trueField = $field;
+        if (substr($field, 0, 1) === '-') {
+            $not = true;
+            $trueField = substr($field, 1);
+        }
+        if (in_array(substr($trueField, -1), ['<', '>', '='])) {
+            $mode = substr($trueField, -1);
+            $trueField = substr($trueField, 0, -1);
+            if (in_array(substr($trueField, -1), ['<', '>', '!'])) {
+                $mode = substr($trueField, -1) . $mode;
+                $trueField = substr($trueField, 0, -1);
+            }
+        }
+        if (substr($field, -1) == "%") {
+            $mode = '%';
+            $trueField = substr($trueField, 0, -1);
+        }
+        return array($not, $mode, $trueField);
+    }
+
+    /**
+     * @param string $mode
+     * @param $field
+     * @param $value
+     * @param array $fieldResults
+     * @return array
+     * @throws Exception
+     */
+    private function getAdvancedResult(string $mode, $field, $value, $fieldResults = []): array
+    {
+        switch ($mode) {
+            case '%': // process regular query
+                if (is_object($value) && isset($this->config['serializableObjects'][get_class($value)])) $value = $this->config['serializableObjects'][get_class($value)]($value);
+                if ($this->index->open('values_' . $field, false) !== null) {
+                    $array = $this->index->open('values_' . $field, false)->getContent();
+                    $tokens = $this->tokenizeQuery($value);
+                    foreach ($tokens as $token) {
+                        $this->computeScore($fieldResults, $array[$token] ?? []);
+                    }
+                }
+                break;
+            case '<': // process "Lesser than" query
+                if (is_object($value) && isset($this->config['serializableObjects'][get_class($value)])) $value = $this->config['serializableObjects'][get_class($value)]($value);
+                if ($this->index->open('exact_' . $field, false) !== null) {
+                    $array = $this->index->open('exact_' . $field, false)->getContent();
+                    ksort($array);
+                    foreach ($array as $k => $v) {
+                        if ($k >= $value) break;
+                        $this->computeScore($fieldResults, $array[$k] ?? []);
+                    }
+                }
+                break;
+            case '>': // process "Greater than" query
+                if (is_object($value) && isset($this->config['serializableObjects'][get_class($value)])) $value = $this->config['serializableObjects'][get_class($value)]($value);
+                if ($this->index->open('exact_' . $field, false) !== null) {
+                    $array = $this->index->open('exact_' . $field, false)->getContent();
+                    ksort($array);
+                    $found = false;
+                    foreach ($array as $k => $v) {
+                        if ($k >= $value) $found = true;
+                        if (!$found) continue;
+                        if ($k != $value) $this->computeScore($fieldResults, $array[$k] ?? []);
+                    }
+                }
+                break;
+            case '<=': // process "Lesser than or Equal" query
+                if (is_object($value) && isset($this->config['serializableObjects'][get_class($value)])) $value = $this->config['serializableObjects'][get_class($value)]($value);
+                if ($this->index->open('exact_' . $field, false) !== null) {
+                    $array = $this->index->open('exact_' . $field, false)->getContent();
+                    ksort($array);
+                    foreach ($array as $k => $v) {
+                        if ($k > $value) break;
+                        $this->computeScore($fieldResults, $array[$k] ?? []);
+                    }
+                }
+                break;
+            case '>=': // process "Greater than or Equal" query
+                if (is_object($value) && isset($this->config['serializableObjects'][get_class($value)])) $value = $this->config['serializableObjects'][get_class($value)]($value);
+                if ($this->index->open('exact_' . $field, false) !== null) {
+                    $array = $this->index->open('exact_' . $field, false)->getContent();
+                    ksort($array);
+                    $found = false;
+                    foreach ($array as $k => $v) {
+                        if ($k >= $value) $found = true;
+                        if (!$found) continue;
+                        $this->computeScore($fieldResults, $array[$k] ?? []);
+                    }
+                }
+                break;
+            case '!=':
+                if (is_object($value) && isset($this->config['serializableObjects'][get_class($value)])) $value = $this->config['serializableObjects'][get_class($value)]($value);
+                if ($this->index->open('exact_' . $field, false) !== null) {
+                    $array = $this->index->open('exact_' . $field, false)->getContent();
+                    foreach ($array as $k => $v) {
+                        if ($k == $value) continue;
+                        $this->computeScore($fieldResults, $array[$k] ?? []);
+                    }
+                }
+                break;
+            default: // process exact search
+                if (is_object($value) && isset($this->config['serializableObjects'][get_class($value)])) $value = $this->config['serializableObjects'][get_class($value)]($value);
+                if ($this->index->open('exact_' . $field, false) !== null) {
+                    $array = $this->index->open('exact_' . $field, false)->getContent();
+                    $this->computeScore($fieldResults, $array[$value] ?? []);
+                }
+        }
+        return $fieldResults;
     }
 
     /**

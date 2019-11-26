@@ -6,6 +6,7 @@ namespace VFou\Search\Query;
 
 class QueryBuilder
 {
+    /** @var string|array|QuerySegment $search */
     private $search;
     private $limit;
     private $offset;
@@ -14,15 +15,27 @@ class QueryBuilder
 
     /**
      * QueryBuilder constructor.
-     * @param string $query
+     * @param string|QuerySegment $query
+     * @param QuerySegment $querySegment
      */
-    public function __construct($query = "")
+    public function __construct($query = null, QuerySegment $querySegment = null)
     {
-        $this->search = $query;
+        $this->search = $query ?? '';
+        if($querySegment != null){
+            if(is_string($query)){
+                $this->search = QuerySegment::search($query, $querySegment);
+            } else {
+                $this->search = $querySegment;
+            }
+        }
         $this->limit = 10;
         $this->offset = 0;
         $this->order = [];
         $this->facets = [];
+    }
+
+    public function setQuerySegment(QuerySegment $query){
+        $this->search = $query;
     }
 
     /**
