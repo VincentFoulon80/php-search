@@ -144,16 +144,16 @@ class Index
             if($file->getName() == 'all') continue;
             $tokens = $file->getContent();
             $tokensToRemove = [];
-            foreach($tokens as &$token){
+            foreach($tokens as $tokenName => &$token){
                 if(isset($token[$id])){
                     unset($token[$id]);
                     if(empty($token)){
-                        $tokensToRemove[] = $token;
+                        $tokensToRemove[] = $tokenName;
                     }
                 }
             }
-            foreach($tokensToRemove as $token){
-                unset($tokens[$token]);
+            foreach($tokensToRemove as $tokenName){
+                unset($tokens[$tokenName]);
             }
             if(empty($tokens)){
                 $file->delete();
