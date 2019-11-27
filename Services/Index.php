@@ -91,6 +91,9 @@ class Index
         if(!isset($this->schemas[$document['type']])){
             throw new Exception("Document type ".$document['type']." do not match any of existing types : ".implode(", ", array_keys($this->schemas)));
         }
+        if($this->documents->open($document['id']) !== null){
+            $this->delete($document['id']);
+        }
         // we should be good now
         $schema = $this->schemas[$document['type']];
         // building document
