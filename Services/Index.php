@@ -806,7 +806,7 @@ class Index
                 throw new Exception("Field ".$def['_name']." of document ID ".$this->updatingId." is an object of type ".get_class($data)." that is not supported by the currently configured SerializableObjects.");
             }
         }
-        $array[$data][$this->updatingId] = 1;
+        $array[$data][$this->updatingId] = $def['_boost'] ?? 1;
         if(!empty($array)){
             $exact->setContent($array);
         }
