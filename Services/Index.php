@@ -140,25 +140,28 @@ class Index
         $this->documents->delete($id);
         // clear the index of every references
         $allFiles = $this->index->openAll();
-        foreach($allFiles as $file){
-            if($file->getName() == 'all') continue;
-            $tokens = $file->getContent();
-            $tokensToRemove = [];
-            foreach($tokens as $tokenName => &$token){
-                if(isset($token[$id])){
-                    unset($token[$id]);
-                    if(empty($token)){
-                        $tokensToRemove[] = $tokenName;
+        if($allFiles){
+            foreach($allFiles as $file){
+                if($file->getName() == 'all') continue;
+                $tokens = $file->getContent();
+                $tokensToRemove = [];
+                foreach($tokens as $tokenName => &$token){
+                    if(isset($token[$id])){
+                        unset($token[$id]);
+                        if(empty($token)){
+                            $tokensToRemove[] = $tokenName;
+                        }
                     }
                 }
-            }
-            foreach($tokensToRemove as $tokenName){
-                unset($tokens[$tokenName]);
-            }
-            if(empty($tokens)){
-                $file->delete();
-            } else {
-                $file->setContent($tokens);
+                foreach($tokensToRemove as $tokenName){
+                    if(isset($tokens[$tokenName]))
+                        unset($tokens[$tokenName]);
+                }
+                if(empty($tokens)){
+                    $file->delete();
+                } else {
+                    $file->setContent($tokens);
+                }
             }
         }
         $this->clearCache();
@@ -799,6 +802,7 @@ class Index
         $file = $this->index->open("values_".$def['_name']);
         $exact = $this->index->open("exact_".$def['_name']);
         $array = $exact->getContent();
+        if(!is_array($array)) $array = [];
         if(is_object($data)){
             if(isset($this->config['serializableObjects'][get_class($data)])){
                 $data = $this->config['serializableObjects'][get_class($data)]($data);
@@ -811,6 +815,7 @@ class Index
             $exact->setContent($array);
         }
         $array = $file->getContent();
+        if(!is_array($array)) $array = [];
         $tokens = $this->tokenize($data, $def);
         foreach($tokens as $token => $score){
             $array[$token][$this->updatingId] = $score;
@@ -846,6 +851,7 @@ class Index
             }
             $f = $this->index->open($t);
             $tokens = $f->getContent();
+            if(!is_array($tokens)) $tokens = [];
             if(!isset($tokens[$token])){
                 $tokens[$token] = ["$id"=>$score];
             } else {
