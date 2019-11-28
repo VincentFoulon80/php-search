@@ -93,6 +93,7 @@ class Index
         }
         if($this->documents->open($document['id']) !== null){
             $this->delete($document['id']);
+            $this->documents->free();
         }
         // we should be good now
         $schema = $this->schemas[$document['type']];
