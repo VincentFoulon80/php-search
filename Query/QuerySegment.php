@@ -62,6 +62,12 @@ class QuerySegment
 
     // --- Static functions ----------------------
 
+    /**
+     * Search for the exact $term provided in $field
+     * @param $field
+     * @param $terms
+     * @return QuerySegment
+     */
     public static function exactSearch($field, $terms){
         $qs = new QuerySegment();
         $qs->field = $field;
@@ -69,25 +75,97 @@ class QuerySegment
         return $qs;
     }
 
+    /**
+     * Makes an array of QuerySegments based on exactSearch method
+     * @see QuerySegment::exactSearch()
+     * @param $field
+     * @param $searches
+     * @return array
+     */
+    public static function bulkExactSearch($field, $searches){
+        $segs = [];
+        foreach($searches as $search){
+            $segs[] = self::exactSearch($field, $search);
+        }
+        return $segs;
+    }
+
+    /**
+     * Regular Search of $term in $field
+     * @param $field
+     * @param $terms
+     * @return QuerySegment
+     */
     public static function fieldSearch($field, $terms){
         return self::exactSearch($field.'%', $terms);
     }
+
+    /**
+     * Makes an array of QuerySegments based on fieldSearch method
+     * @see QuerySegment::fieldSearch()
+     * @param $field
+     * @param $searches
+     * @return array
+     */
+    public static function bulkFieldSearch($field, $searches){
+        $segs = [];
+        foreach($searches as $search){
+            $segs[] = self::fieldSearch($field, $search);
+        }
+        return $segs;
+    }
+
+    /**
+     * Search for values in $field where the values is lesser than $terms
+     * @param $field
+     * @param $terms
+     * @return QuerySegment
+     */
     public static function lesserSearch($field, $terms){
         return self::exactSearch($field.'<', $terms);
     }
+    /**
+     * Search for values in $field where the values is lesser or equal to $terms
+     * @param $field
+     * @param $terms
+     * @return QuerySegment
+     */
     public static function lesserEqualSearch($field, $terms){
         return self::exactSearch($field.'<=', $terms);
     }
+    /**
+     * Search for values in $field where the values is greater than $terms
+     * @param $field
+     * @param $terms
+     * @return QuerySegment
+     */
     public static function greaterSearch($field, $terms){
         return self::exactSearch($field.'>', $terms);
     }
+    /**
+     * Search for values in $field where the values is greater or equal to $terms
+     * @param $field
+     * @param $terms
+     * @return QuerySegment
+     */
     public static function greaterEqualSearch($field, $terms){
         return self::exactSearch($field.'>=', $terms);
     }
+    /**
+     * Search for values in $field where the values is not equal to $terms
+     * @param $field
+     * @param $terms
+     * @return QuerySegment
+     */
     public static function notEqualSearch($field, $terms){
         return self::exactSearch($field.'!=', $terms);
     }
 
+    /**
+     * @param $simpleQuery
+     * @param QuerySegment $childSegment
+     * @return QuerySegment
+     */
     public static function search($simpleQuery, QuerySegment $childSegment){
         $qs = new QuerySegment(self::Q_SEARCH);
         $qs->field = '%';
@@ -97,11 +175,13 @@ class QuerySegment
     }
 
     /**
+     * Merges an array of QuerySegments with an AND link
      * @param QuerySegment[] $segments
      * @return QuerySegment
      */
     public static function and(...$segments)
     {
+        if(empty($segments)) return null;
         if(count($segments) == 1 && is_array($segments[0])){
             $segments = $segments[0];
         }
@@ -111,11 +191,13 @@ class QuerySegment
     }
 
     /**
+     * Merges an array of QuerySegments with an OR link
      * @param QuerySegment[] $segments
      * @return QuerySegment
      */
     public static function or(...$segments)
     {
+        if(empty($segments)) return null;
         if(count($segments) == 1 && is_array($segments[0])){
             $segments = $segments[0];
         }
@@ -125,6 +207,7 @@ class QuerySegment
     }
 
     /**
+     * Negates the provided $segment
      * @param QuerySegment $segment
      * @return QuerySegment
      */
@@ -134,6 +217,11 @@ class QuerySegment
         return $segment;
     }
 
+    /**
+     * Debug your query by creating a human readable string
+     * @param QuerySegment $seg
+     * @return string
+     */
     public static function debug(QuerySegment $seg){
         $rtn = [];
         if($seg->type === QuerySegment::Q_NOT){
