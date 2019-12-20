@@ -181,10 +181,10 @@ class QuerySegment
      */
     public static function and(...$segments)
     {
-        if(empty($segments)) return null;
         if(count($segments) == 1 && is_array($segments[0])){
             $segments = $segments[0];
         }
+        if(empty($segments)) return null;
         $qs = new QuerySegment(self::Q_AND);
         $qs->children = $segments;
         return $qs;
@@ -197,10 +197,10 @@ class QuerySegment
      */
     public static function or(...$segments)
     {
-        if(empty($segments)) return null;
         if(count($segments) == 1 && is_array($segments[0])){
             $segments = $segments[0];
         }
+        if(empty($segments)) return null;
         $qs = new QuerySegment(self::Q_OR);
         $qs->children = $segments;
         return $qs;
