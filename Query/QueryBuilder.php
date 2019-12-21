@@ -12,6 +12,7 @@ class QueryBuilder
     private $offset;
     private $order;
     private $facets;
+    private $connex = false;
 
     /**
      * QueryBuilder constructor.
@@ -123,6 +124,13 @@ class QueryBuilder
         $this->offset = $offset;
     }
 
+    public function enableConnex() {
+        $this->connex = true;
+    }
+    public function disableConnex() {
+        $this->connex = false;
+    }
+
     public function getQuery()
     {
         return $this->search;
@@ -133,7 +141,8 @@ class QueryBuilder
             'limit' => $this->limit,
             'offset' => $this->offset,
             'order' => $this->order,
-            'facets' => $this->facets
+            'facets' => $this->facets,
+            'connex' => $this->connex
         ];
     }
 }

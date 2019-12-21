@@ -2,6 +2,8 @@
 
 namespace VFou\Search\Services\FAL;
 
+use Exception;
+
 class File
 {
     /**
@@ -64,7 +66,7 @@ class File
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     public function unload(){
         $path = $this->directory.$this->name;
@@ -73,7 +75,7 @@ class File
             {
                 if(file_exists($path) && !is_file($path))
                 {
-                    throw new \Exception("Unable to write the file $path : It's not a file !");
+                    throw new Exception("Unable to write the file $path : It's not a file !");
                 }
                 file_put_contents($path, serialize($this->content));
             }
@@ -86,7 +88,7 @@ class File
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     public function __destruct(){
 		if($this->loaded || $this->modified){
@@ -103,7 +105,7 @@ class File
 
     /**
      * @return string|array
-     * @throws \Exception
+     * @throws Exception
      */
     public function getContent(){
         if(!$this->loaded){
@@ -119,10 +121,15 @@ class File
 
     /**
      * @param $content
+     * @throws Exception
      */
     public function setContent($content){
         $this->modified = true;
         $this->content = $content;
+        if(!$this->keepOpen){
+            $this->unload();
+            $this->modified = false;
+        }
     }
 
     /**

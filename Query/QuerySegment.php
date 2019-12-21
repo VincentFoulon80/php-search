@@ -4,6 +4,9 @@
 namespace VFou\Search\Query;
 
 
+use RecursiveArrayIterator;
+use RecursiveIteratorIterator;
+
 class QuerySegment
 {
     const Q_NOTHING = '';
@@ -47,7 +50,21 @@ class QuerySegment
         return $this->value;
     }
 
-    public function getSegment(){
+    public function getTerms()
+    {
+        if(empty($this->children)){
+            return [$this->value];
+        } else {
+            $segment = [];
+            foreach($this->children as $child){
+                $segment = array_merge($segment, $child->getTerms());
+            }
+            return $segment;
+        }
+    }
+
+    public function getSegment()
+    {
         if(empty($this->children)){
             return [$this->field => [$this->value]];
         } else {
@@ -163,14 +180,16 @@ class QuerySegment
 
     /**
      * @param $simpleQuery
-     * @param QuerySegment $childSegment
+     * @param QuerySegment|null $childSegment
      * @return QuerySegment
      */
-    public static function search($simpleQuery, QuerySegment $childSegment){
+    public static function search($simpleQuery, $childSegment){
         $qs = new QuerySegment(self::Q_SEARCH);
         $qs->field = '%';
         $qs->value = $simpleQuery;
-        $qs->children = [$childSegment];
+        if(!empty($childSegment)){
+            $qs->children = [$childSegment];
+        }
         return $qs;
     }
 

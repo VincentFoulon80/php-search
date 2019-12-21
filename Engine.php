@@ -123,6 +123,13 @@ class Engine
                 'documents_dir' => DIRECTORY_SEPARATOR.'engine'.DIRECTORY_SEPARATOR.'documents',
                 'cache_dir' => DIRECTORY_SEPARATOR.'engine'.DIRECTORY_SEPARATOR.'cache',
                 'fuzzy_cost' => 1,
+                'connex' => [
+                    'threshold' => 0.9,
+                    'min' => 3,
+                    'max' => 10,
+                    'limitToken' => 20,
+                    'limitDocs' => 10
+                ],
                 'serializableObjects' => [
                     DateTime::class => function($datetime) { return $datetime->getTimestamp(); }
                 ]

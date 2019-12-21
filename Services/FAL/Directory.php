@@ -2,6 +2,8 @@
 
 namespace VFou\Search\Services\FAL;
 
+use Exception;
+
 class Directory
 {
     /**
@@ -19,7 +21,7 @@ class Directory
     /**
      * Directory constructor.
      * @param string $path
-     * @throws \Exception
+     * @throws Exception
      */
     public function __construct($path = "", $keepFilesOpenned = true)
     {
@@ -35,14 +37,14 @@ class Directory
 
     /**
      * @param $directory
-     * @throws \Exception
+     * @throws Exception
      */
     private function createDirectoryIfNotExist(){
         if(!file_exists($this->path))
         {
             mkdir($this->path, 0775, true);
         } elseif(!is_dir($this->path)){
-            throw new \Exception("The file at path $this->path is not a directory !");
+            throw new Exception("The file at path $this->path is not a directory !");
         }
     }
 
@@ -60,6 +62,24 @@ class Directory
             }
         }
         return $this->files[$filename] ?? null;
+    }
+
+    /**
+     * @param $name
+     * @param bool $keepFilesOpened
+     * @return Directory
+     * @throws Exception
+     */
+    public function getOrCreateDirectory($name, $keepFilesOpened = false)
+    {
+        if(file_exists($this->path.$name)){
+            if(is_dir($this->path.$name)){
+                return new Directory($this->path.$name, $keepFilesOpened);
+            } else {
+                return null;
+            }
+        }
+        return new Directory($this->path.$name, $keepFilesOpened);
     }
 
     /**
@@ -98,7 +118,7 @@ class Directory
 
     /**
      * @param bool $softDelete
-     * @throws \Exception
+     * @throws Exception
      */
     public function deleteAll($softDelete = true){
         if($softDelete){
@@ -124,7 +144,7 @@ class Directory
             if (!$this->hardDelete($dir . DIRECTORY_SEPARATOR . $file)) {
                 chmod($dir . DIRECTORY_SEPARATOR . $file, 0777);
                 if (!$this->hardDelete($dir . DIRECTORY_SEPARATOR . $file)) return false;
-            };
+            }
         }
         return rmdir($dir);
     }
