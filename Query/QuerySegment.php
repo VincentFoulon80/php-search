@@ -15,41 +15,66 @@ class QuerySegment
     const Q_NOT = 'NOT';
     const Q_SEARCH = 'SEARCH';
 
+    /** @var string $type */
     public $type;
-
+    /** @var string $field */
     private $field;
+    /** @var mixed $value */
     private $value;
 
     /** @var QuerySegment[] $child */
     private $children = [];
 
+    /**
+     * QuerySegment constructor.
+     * @param string $type
+     */
     public function __construct($type = self::Q_NOTHING)
     {
         $this->type = $type;
     }
 
+    /**
+     * @param QuerySegment[] $children
+     */
     private function setChildren(array $children){
         $this->children = $children;
     }
 
+    /**
+     * @return QuerySegment[]
+     */
     public function getChildren(){
         return $this->children;
     }
 
+    /**
+     * @param $field
+     */
     public function setField($field){
         $this->field = $field;
     }
 
+    /**
+     * @return string
+     */
     public function getField()
     {
         return $this->field;
     }
 
+    /**
+     * @return mixed
+     */
     public function getValue()
     {
         return $this->value;
     }
 
+    /**
+     * return a list of every search terms provided into this QuerySegment
+     * @return array
+     */
     public function getTerms()
     {
         if(empty($this->children)){
@@ -63,6 +88,10 @@ class QuerySegment
         }
     }
 
+    /**
+     * Return the completes hierarchy of this QuerySegment for computing query
+     * @return array
+     */
     public function getSegment()
     {
         if(empty($this->children)){
@@ -179,6 +208,7 @@ class QuerySegment
     }
 
     /**
+     * Merges the regular $simpleQuery with your complete Segment $childSegment
      * @param $simpleQuery
      * @param QuerySegment|null $childSegment
      * @return QuerySegment

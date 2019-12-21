@@ -77,6 +77,7 @@ class Index
     }
 
     /**
+     * Create or Update a document into the index
      * @param $document
      * @return bool
      * @throws Exception
@@ -122,7 +123,7 @@ class Index
 
 
     /**
-     * memory optimized indexation of multiple files
+     * Memory optimized indexation of multiple documents
      * @param array $documents
      * @return bool
      * @throws Exception
@@ -137,6 +138,7 @@ class Index
     }
 
     /**
+     * Deletes the provided $id from the index
      * @param $id
      * @return bool
      * @throws Exception
@@ -199,6 +201,7 @@ class Index
     }
 
     /**
+     * Clears the cache directory
      * @throws Exception
      */
     public function clearCache(){
@@ -206,6 +209,7 @@ class Index
     }
 
     /**
+     * Performs a search
      * @param $query
      * @param array $filters
      * @return array
@@ -301,7 +305,8 @@ class Index
             'numFound' => count($results),
             'maxScore' => !empty($results) ? max($results) : 0,
             'documents' => $documents,
-            'facets' => $facets
+            'facets' => $facets,
+            'connex' => []
         ];
         if($filters['connex'] ?? false){
             $response['connex'] = $this->processConnex($documents, $tokens);
@@ -311,6 +316,7 @@ class Index
     }
 
     /**
+     * Walk through QuerySegment $qs and perform a search based of the segments
      * @param QuerySegment $qs
      * @return array|string
      * @throws Exception
@@ -338,12 +344,12 @@ class Index
     }
 
     /**
+     * Merges results based of the boolean operator AND/OR of a QuerySegment $qs, with the $not and $first parameters
      * @param QuerySegment $qs
      * @param $results
      * @param bool $first
      * @param $not
      * @param $currentResult
-     * @return array
      */
     private function mergeSegments(QuerySegment $qs, &$results, bool $first, $not, $currentResult)
     {
@@ -371,6 +377,7 @@ class Index
      * @param $query
      * @param $results
      * @throws Exception
+     * @deprecated Please use QuerySegment instead of QueryBuilder to build your queries
      */
     private function processAdvancedSearch($query, &$results)
     {
@@ -414,8 +421,9 @@ class Index
     }
 
     /**
+     * Extract search parameters for the provided $field
      * @param $field
-     * @return array
+     * @return array [not, mode, trueFieldName]
      */
     private function describeField($field): array
     {
@@ -442,7 +450,8 @@ class Index
     }
 
     /**
-     * @param string $mode
+     * Processes query with the provided $mode
+     * @param string $mode '' / '%' / '<' / '<=' / '>' / '>=' / '!='
      * @param $field
      * @param $value
      * @param array $fieldResults
@@ -525,6 +534,7 @@ class Index
     }
 
     /**
+     * Get the content of the document with $id
      * @param $id
      * @return mixed
      * @throws Exception
@@ -536,6 +546,7 @@ class Index
     }
 
     /**
+     * Returns the configured schema
      * @return array
      */
     public function getSchemas()
@@ -544,6 +555,7 @@ class Index
     }
 
     /**
+     * Sets the schema
      * @param array $schemas
      */
     public function setSchemas($schemas)
@@ -551,13 +563,19 @@ class Index
         $this->schemas = $schemas;
     }
 
+    /**
+     * Closes every opened files, freeing memory
+     */
     public function freeMemory(){
         $this->index->free();
         $this->documents->free();
         $this->cache->free();
+        if($this->indexDocs != null) $this->indexDocs->free();
     }
 
     /**
+     * Find documents that match the provided $token
+     * Try to approximate the token if nothing is found
      * @param $token
      * @return array
      * @throws Exception
@@ -575,6 +593,7 @@ class Index
     }
 
     /**
+     * Suggest a list of words matching the provided $token
      * @param $token
      * @param bool $providePonderations
      * @return array
@@ -599,6 +618,8 @@ class Index
     }
 
     /**
+     * Try to find a token based of the provided $token
+     * Will search for misstypes using approximate function
      * @param $token
      * @return array
      * @throws Exception
@@ -627,7 +648,7 @@ class Index
     }
 
     /**
-     *
+     * Search for misstypes in the provided $term, with a limit $cost
      * @param $term
      * @param $cost
      * @param array $positions
@@ -672,6 +693,7 @@ class Index
     }
 
     /**
+     * Builds the document's index and fields
      * @param $data
      * @param $schema
      * @return array
@@ -692,6 +714,7 @@ class Index
     }
 
     /**
+     * Build field for storing into the document
      * @param $fieldName
      * @param $definition
      * @param $data
@@ -728,6 +751,7 @@ class Index
     }
 
     /**
+     * Builds the index and tokenize every authorized terms
      * @param $fieldName
      * @param $definition
      * @param $data
@@ -769,11 +793,17 @@ class Index
         }
     }
 
+    /**
+     * Tokenizes a query string
+     * @param $query
+     * @return array
+     */
     public function tokenizeQuery($query){
         return array_keys($this->tokenize($query, ['_type'=>'search','_boost'=>0]));
     }
 
     /**
+     * Tokenize a field based on his $def
      * @param $data
      * @param $def
      * @return array|null|RecursiveIteratorIterator
@@ -807,6 +837,7 @@ class Index
     }
 
     /**
+     * Generates facets and writes them into the index directory
      * @param $data
      * @param $def
      * @return void
@@ -848,8 +879,10 @@ class Index
     }
 
     /**
+     * Writes a document into the documents directory
      * @param $doc
      * @param $id
+     * @throws Exception
      */
     private function updateDocument($doc, $id)
     {
@@ -858,6 +891,7 @@ class Index
     }
 
     /**
+     * Writes index data into the index directory
      * @param $index
      * @param $id
      * @throws Exception
@@ -890,6 +924,7 @@ class Index
     }
 
     /**
+     * Sets a cache entry
      * @param $identifier
      * @param $response
      * @throws Exception
@@ -901,6 +936,7 @@ class Index
     }
 
     /**
+     * Get a cache entry
      * @param $identifier
      * @return mixed
      * @throws Exception
@@ -912,6 +948,8 @@ class Index
     }
 
     /**
+     * Compiles results using the current filters. This is the last step of the search
+     * uses limit, offset and order
      * @param $filters
      * @param array $results
      * @return array
@@ -956,6 +994,7 @@ class Index
     }
 
     /**
+     * Compiles the facets asked based of the results.
      * @param array $results
      * @param $query
      * @param $filters

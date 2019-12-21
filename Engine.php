@@ -103,7 +103,7 @@ class Engine
     }
 
     /**
-     * delete the given document ID into the index
+     * delete the given document ID from the index
      * @param $id
      * @return bool
      * @throws Exception
@@ -113,6 +113,7 @@ class Engine
     }
 
     /**
+     * Returns the default configuration
      * @return array
      */
     private function getDefaultConfig(){

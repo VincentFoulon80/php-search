@@ -49,6 +49,7 @@ class Directory
     }
 
     /**
+     * opens a file
      * @param string $filename
      * @param boolean $createIfNotExist
      * @return File
@@ -65,6 +66,7 @@ class Directory
     }
 
     /**
+     * get a Directory based on the provided $name, creates the directory if it doesn't exist
      * @param $name
      * @param bool $keepFilesOpened
      * @return Directory
@@ -83,12 +85,17 @@ class Directory
     }
 
     /**
+     * deletes a file
      * @param $file
      */
     public function delete($file){
         $this->open($file)->delete();
     }
 
+    /**
+     * gives all file names contained into the directory
+     * @return array
+     */
     public function scan(){
         $all = [];
         foreach(scandir($this->path) as $file){
@@ -100,6 +107,7 @@ class Directory
     }
 
     /**
+     * Open all files and returns them
      * @return File[]
      */
     public function openAll(){
@@ -112,11 +120,15 @@ class Directory
         return $this->files;
     }
 
+    /**
+     * Unload all opened files
+     */
     public function free(){
         $this->files = [];
     }
 
     /**
+     * Deletes all files contained into the directory
      * @param bool $softDelete
      * @throws Exception
      */
@@ -137,6 +149,12 @@ class Directory
         }
         $this->files = [];
     }
+
+    /**
+     * Deletes the folder and all its content
+     * @param $dir
+     * @return bool
+     */
     private function hardDelete($dir) {
         if (!is_dir($dir) || is_link($dir)) return unlink($dir);
         foreach (scandir($dir) as $file) {

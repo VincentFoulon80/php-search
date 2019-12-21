@@ -55,6 +55,9 @@ class File
         $this->keepOpen = $keepOpen;
     }
 
+    /**
+     * Loads the file's content
+     */
     public function load(){
         $path = $this->directory.$this->name;
         if(file_exists($path) && is_file($path))
@@ -66,6 +69,7 @@ class File
     }
 
     /**
+     * Unloads the file's content and save changes or deletes it
      * @throws Exception
      */
     public function unload(){
@@ -133,6 +137,9 @@ class File
     }
 
     /**
+     * Marks the file as deleted.
+     * if $clean, immediately deletes the content
+     * the file will be deleted when unloaded
      * @param bool $clean
      */
     public function delete($clean = true){
@@ -141,7 +148,7 @@ class File
     }
 
     /**
-     *
+     * Cancels the deletion of a file, if the content was cleaned, it will still empty the target file on unload
      */
     public function restore(){
         $this->deleted = false;
