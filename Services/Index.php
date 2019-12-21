@@ -309,7 +309,7 @@ class Index
             'connex' => []
         ];
         if($filters['connex'] ?? false){
-            $response['connex'] = $this->processConnex($documents, $tokens);
+            $response['connex'] = $this->processConnex($results, $tokens);
         }
         $this->setCache($md5, $response);
         return $response;
@@ -1062,12 +1062,12 @@ class Index
             if($this->indexDocs == null) {
                 $this->indexDocs = $this->index->getOrCreateDirectory("docs");
             }
-            $maxScore = current($documents)['_score'];
+            $maxScore = current($documents);
             $count = 0;
             $tokens = [];
             $accuracy = [];
-            foreach($documents as $id=>$data){
-                $scorePercentage = ($data['_score']/$maxScore);
+            foreach($documents as $id=>$docScore){
+                $scorePercentage = ($docScore/$maxScore);
                 if($scorePercentage > $this->config['connex']['threshold'] || $count < $this->config['connex']['min']){
                     $docTokens = $this->indexDocs->open($id)->getContent();
                     $this->computeScore($tokens, $docTokens);
