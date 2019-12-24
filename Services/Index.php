@@ -2,11 +2,11 @@
 
 namespace VFou\Search\Services;
 
-use Closure;
 use DateTime;
 use Exception;
 use RecursiveArrayIterator;
 use RecursiveIteratorIterator;
+use Throwable;
 use VFou\Search\Query\QuerySegment;
 use VFou\Search\Services\FAL\Directory;
 use VFou\Search\Tokenizers\TokenizerInterface;
@@ -79,10 +79,11 @@ class Index
     /**
      * Create or Update a document into the index
      * @param $document
+     * @param bool $clearCache Be aware that when this parameter is false you must free the memory by yourself!
      * @return bool
      * @throws Exception
      */
-    public function update($document)
+    public function update($document, $clearCache = true)
     {
         if(is_object($document)){
             $document = get_object_vars($document);
@@ -101,6 +102,9 @@ class Index
             $this->delete($document['id']);
             $this->documents->free();
         }
+        if(!$clearCache && $this->indexDocs == null){
+            $this->indexDocs = $this->index->getOrCreateDirectory('docs', true);
+        }
         // we should be good now
         $schema = $this->schemas[$document['type']];
         // building document
@@ -114,10 +118,11 @@ class Index
                 $index[$k] = !empty($v) ? $v:0;
             }
         }
-
         $this->updateIndex($index, $document['id']);
         $this->updateDocument($doc, $document['id']);
-        $this->clearCache();
+        if($clearCache){
+            $this->clearCache();
+        }
         return true;
     }
 
@@ -129,11 +134,16 @@ class Index
      * @throws Exception
      */
     public function updateMultiple(array &$documents){
+        $count = 0;
         foreach($documents as &$document){
-            $this->update($document);
+            $this->update($document, false);
             $document = null;
-            $this->freeMemory();
+            $count++;
+            if($count % 50 == 0){
+                $this->freeMemory();
+            }
         }
+        $this->freeMemory();
         return true;
     }
 
@@ -146,6 +156,10 @@ class Index
     public function delete($id){
         // remove document
         $this->documents->delete($id);
+        if($this->indexDocs == null){
+            $this->indexDocs = $this->index->getOrCreateDirectory('docs', true);
+        }
+        $this->indexDocs->delete($id);
         // clear the index of every references
         $allFiles = $this->index->openAll();
         if($allFiles){
@@ -155,7 +169,9 @@ class Index
                 $tokensToRemove = [];
                 foreach($tokens as $tokenName => &$token){
                     if(isset($token[$id])){
-                        unset($token[$id]);
+                        try{
+                            unset($token[$id]);
+                        } catch(Throwable $ex){}
                         if(empty($token)){
                             $tokensToRemove[] = $tokenName;
                         }
@@ -848,13 +864,13 @@ class Index
         $filterable = isset($def['_filterable']) ? $def['_filterable'] : false;
         if($filterable){
             $file = $this->index->open('facet_'.$def['_name']);
-            $array = $file->getContent();
+            $array = [];
             $array[$data][$this->updatingId] = $this->updatingId;
-            $file->setContent($array);
+            $file->addContent($array);
         }
         $file = $this->index->open("values_".$def['_name']);
         $exact = $this->index->open("exact_".$def['_name']);
-        $array = $exact->getContent();
+        $array = [];
         if(!is_array($array)) $array = [];
         if(is_object($data)){
             if(isset($this->config['serializableObjects'][get_class($data)])){
@@ -865,16 +881,16 @@ class Index
         }
         $array[$data][$this->updatingId] = $def['_boost'] ?? 1;
         if(!empty($array)){
-            $exact->setContent($array);
+            $exact->addContent($array);
         }
-        $array = $file->getContent();
+        $array = [];
         if(!is_array($array)) $array = [];
         $tokens = $this->tokenize($data, $def);
         foreach($tokens as $token => $score){
             $array[$token][$this->updatingId] = $score;
         }
         if(!empty($array)){
-            $file->setContent($array);
+            $file->addContent($array);
         }
     }
 
@@ -904,23 +920,23 @@ class Index
         }
         $document = $this->indexDocs->open($id);
         $document->setContent($index);
-        $all = $file->getContent();
+        $all = [];
         foreach($index as $token=>$score){
             $t = substr($token,0,1);
             if(!isset($all[$token])){
                 $all[$token] = $t;
             }
             $f = $this->index->open($t);
-            $tokens = $f->getContent();
+            $tokens = [];
             if(!is_array($tokens)) $tokens = [];
             if(!isset($tokens[$token])){
                 $tokens[$token] = ["$id"=>$score];
             } else {
                 $tokens[$token]["$id"] = $score;
             }
-            $f->setContent($tokens);
+            $f->addContent($tokens);
         }
-        $file->setContent($all);
+        $file->addContent($all);
     }
 
     /**

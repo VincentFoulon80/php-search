@@ -6,9 +6,11 @@ use DateTime;
 use Exception;
 use VFou\Search\Query\QueryBuilder;
 use VFou\Search\Services\Index;
+use VFou\Search\Tokenizers\AlphaNumericTokenizer;
 use VFou\Search\Tokenizers\DateFormatTokenizer;
 use VFou\Search\Tokenizers\DateSplitTokenizer;
 use VFou\Search\Tokenizers\LowerCaseTokenizer;
+use VFou\Search\Tokenizers\RemoveAccentsTokenizer;
 use VFou\Search\Tokenizers\singleQuoteTokenizer;
 use VFou\Search\Tokenizers\TrimPunctuationTokenizer;
 use VFou\Search\Tokenizers\WhiteSpaceTokenizer;
@@ -132,7 +134,7 @@ class Engine
                     'limitDocs' => 10
                 ],
                 'serializableObjects' => [
-                    DateTime::class => function($datetime) { return $datetime->getTimestamp(); }
+                    DateTime::class => function($datetime) { /** @var DateTime $datetime */ return $datetime->getTimestamp(); }
                 ]
             ],
             'schemas' => [
@@ -189,10 +191,11 @@ class Engine
                     DateSplitTokenizer::class
                 ],
                 '_default' => [
+                    RemoveAccentsTokenizer::class,
                     LowerCaseTokenizer::class,
                     WhiteSpaceTokenizer::class,
                     singleQuoteTokenizer::class,
-                    TrimPunctuationTokenizer::class
+                    AlphaNumericTokenizer::class
                 ]
             ]
         ];

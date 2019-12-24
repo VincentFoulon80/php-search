@@ -66,6 +66,7 @@ class File
         } else {
             $this->content = [];
         }
+        $this->loaded = true;
     }
 
     /**
@@ -114,7 +115,6 @@ class File
     public function getContent(){
         if(!$this->loaded){
             $this->load();
-            $this->loaded = true;
         }
         $content = $this->content;
         if(!$this->keepOpen){
@@ -124,11 +124,37 @@ class File
     }
 
     /**
+     * Merge content
+     * @param $content
+     * @throws Exception
+     */
+    public function addContent($content){
+        if(!$this->loaded) {
+            $this->load();
+        }
+        if(empty($this->content)) $this->content = [];
+        $this->modified = true;
+        $this->deleted = false;
+        foreach($content as $token=>$docs){
+            if(is_array($docs)){
+                foreach($docs as $docId=>$score){
+                    $this->content[$token][$docId] = $score;
+                }
+            }
+        }
+        if(!$this->keepOpen){
+            $this->unload();
+            $this->modified = false;
+        }
+    }
+
+    /**
      * @param $content
      * @throws Exception
      */
     public function setContent($content){
         $this->modified = true;
+        $this->deleted = false;
         $this->content = $content;
         if(!$this->keepOpen){
             $this->unload();
@@ -143,7 +169,7 @@ class File
      * @param bool $clean
      */
     public function delete($clean = true){
-        if($clean) $this->content = "";
+        if($clean) $this->content = [];
         $this->deleted = true;
     }
 
