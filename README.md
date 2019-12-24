@@ -91,7 +91,7 @@ $response = $engine->search('post');
 var_dump($response);
 ```
 
-For more informations about this library, go to [the wiki page of this repository](https://github.com/VincentFoulon80/php-search/wiki)
+For more informations about this library, like using more advanced features, go to [the wiki page of this repository](https://github.com/VincentFoulon80/php-search/wiki)
 
 # License
 
