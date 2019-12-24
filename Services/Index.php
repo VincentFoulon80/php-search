@@ -144,6 +144,7 @@ class Index
             }
         }
         $this->freeMemory();
+        $this->clearCache();
         return true;
     }
 
