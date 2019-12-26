@@ -278,8 +278,10 @@ class Index
             }
             $regularResult = [];
             if(is_a($query, QuerySegment::class)){
+                $regularQuery = "";
                 /** @var QuerySegment $query */
                 if($query->type == QuerySegment::Q_SEARCH){
+                    $regularQuery = $query->getValue();
                     $tokens = $this->tokenizeQuery($query->getValue());
                     if(!empty($tokens)){
                         foreach($tokens as $token){
@@ -298,6 +300,7 @@ class Index
                 } else {
                     $results = $regularResult;
                 }
+                $query = $regularQuery;
             } else {
                 /** @deprecated Old QueryBuilder queries are deprecated and will be removed on 1.0 */
                 /** @var array $query */
@@ -326,7 +329,7 @@ class Index
             'connex' => []
         ];
         if($filters['connex'] ?? false){
-            $response['connex'] = $this->processConnex($results, $tokens);
+            $response['connex'] = $this->processConnex($results, $tokens) ?? [];
         }
         $this->setCache($md5, $response);
         return $response;
