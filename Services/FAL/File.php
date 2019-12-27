@@ -140,6 +140,8 @@ class File
                 foreach($docs as $docId=>$score){
                     $this->content[$token][$docId] = $score;
                 }
+            } else {
+                $this->content[$token] = $docs;
             }
         }
         if(!$this->keepOpen){
