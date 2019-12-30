@@ -23,6 +23,7 @@ $uri = $uri ?? '';
             <a href="<?php echo $_SERVER['SCRIPT_NAME'] ?>/" <?php echo ($uri == '/' ? 'class="active"':'') ?>>Statistics</a>
             <a href="<?php echo $_SERVER['SCRIPT_NAME'] ?>/query" <?php echo ($uri == '/query' ? 'class="active"':'') ?>>Query</a>
             <a href="<?php echo $_SERVER['SCRIPT_NAME'] ?>/edit" <?php echo ($uri == '/edit' ? 'class="active"':'') ?>>Edit Documents</a>
+            <a href="<?php echo $_SERVER['SCRIPT_NAME'] ?>/types" <?php echo ($uri == '/types' ? 'class="active"':'') ?>>Types</a>
             <a href="<?php echo $_SERVER['SCRIPT_NAME'] ?>/schemas" <?php echo ($uri == '/schemas' ? 'class="active"':'') ?>>Schemas</a>
         </div>
     </nav>

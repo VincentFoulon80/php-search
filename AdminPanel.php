@@ -45,6 +45,9 @@ class AdminPanel
             case '/edit':
                 $this->editAction();
                 break;
+            case '/types':
+                $this->typesAction();
+                break;
             case '/schemas':
                 $this->schemasAction();
                 break;
@@ -82,8 +85,10 @@ class AdminPanel
         $q = $_GET['q'] ?? '';
         $sw = microtime(true);
         $segments = [];
+        $isFacetSearching = false;
         foreach($_GET as $field=>$value){
             if(strpos($field,'facet-') === 0){
+                $isFacetSearching = true;
                 $facetField = substr($field, 6);
                 $subSeg = [];
                 foreach($value as $v){
@@ -102,7 +107,11 @@ class AdminPanel
                 $query->addFacet($facet);
             }
         }
-        $results = $this->engine->search($query);
+        if($isFacetSearching){
+            $results = $this->engine->search($query);
+        } else {
+            $results = $this->engine->search($q, $query->getFilters());
+        }
         $sw = (microtime(true) - $sw) * 1000;
         include('templates/results.php');
     }
@@ -166,6 +175,24 @@ class AdminPanel
             });
         }
         include('templates/edit.php');
+    }
+
+    /**
+     * Route : /types
+     * Methods : GET
+     * Parameters :
+     *     'type' : currently selected type
+     *     'text' : text to debug
+     */
+    private function typesAction()
+    {
+        $types = $this->engine->getIndex()->getTypes();
+        if(!isset($_GET['type'])) $_GET['type'] = array_keys($types)[0];
+        $debugTokens = [];
+        if(!empty($_GET['text'])){
+            $debugTokens = $this->engine->getIndex()->tokenizeQuery($_GET['text'] ?? '', $_GET['type']);
+        }
+        include('templates/types.php');
     }
 
     /**
