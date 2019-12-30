@@ -121,6 +121,7 @@ class AdminPanel
      * Methods : GET, POST
      * Parameters :
      *     'id' : document to find
+     *     'prefill' : prefill the content with this
      *     'content' : JSON of a document's body
      *     'delete' : document id to delete
      * @throws Exception
@@ -133,6 +134,10 @@ class AdminPanel
                 // deletes document
                 $this->engine->delete($_POST['delete']);
                 $this->engine->getIndex()->getDocument($_POST['delete']);
+            } elseif(isset($_POST['prefill'])) {
+                // we catch this here to prevent 'content' parameter to trigger
+                // by the way, we disable the 'id' parameter
+                $_GET['id'] = null;
             } else {
                 // edit or create document
                 $_POST['content'] = empty($_POST['content'] ?? '') ? '{}' : $_POST['content'];
@@ -187,7 +192,7 @@ class AdminPanel
     private function typesAction()
     {
         $types = $this->engine->getIndex()->getTypes();
-        if(!isset($_GET['type'])) $_GET['type'] = array_keys($types)[0];
+        if(!isset($_GET['type'])) $_GET['type'] = '_default';
         $debugTokens = [];
         if(!empty($_GET['text'])){
             $debugTokens = $this->engine->getIndex()->tokenizeQuery($_GET['text'] ?? '', $_GET['type']);

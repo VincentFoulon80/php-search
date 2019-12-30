@@ -39,21 +39,64 @@ function getFieldType($schemaField){
     return implode('<br>',$result);
 }
 
+function prefillType($definitions, $name = 'value'){
+    if(!empty($definitions['_type'] ?? '')){
+        switch ($definitions['_type']){
+            case 'datetime':
+                return '@@@DateTime:'.time();
+                break;
+            case 'list':
+                if(!empty($definitions['_type.'] ?? '')){
+                    return [
+                        prefillType(['_type'=>$definitions['_type.'],'_array'=>$definitions['_array'] ?? []], $name),
+                        prefillType(['_type'=>$definitions['_type.'],'_array'=>$definitions['_array'] ?? []], $name)
+                    ];
+                }
+                break;
+            case 'array':
+                if(!empty($definitions['_array'] ?? [])){
+                    return prefillSchema($definitions['_array']);
+                }
+                break;
+            default:
+                return "my ".$name;
+        }
+    }
+}
+
+function prefillSchema($schema, $schemaName = null){
+    $prefill = [];
+    if(isset($schemaName)){
+        $prefill = [
+            "id" => 0,
+            "type" => $schemaName
+        ];
+    }
+    foreach($schema as $name=>$definitions){
+        $prefill[$name] = prefillType($definitions, $name);
+    }
+    return $prefill;
+}
+
 function displaySchema($name, $schema){
-    $html = '';
+    $html = '<form method="POST" action="'.$_SERVER['SCRIPT_NAME'].'/edit">';
     if(!empty($name)){
-        $html .= '<table style="width:100%;"><caption>'.$name.'</caption><tbody>';
+        $html .= '<table style="width:100%;"><caption style="padding:0;"><input title="Create a document" type="submit" value="'.$name.'"/></caption><tbody>';
     } else {
         $html .= '<table style="width:100%;"><tbody>';
     }
 
-    foreach($schema as $name=>$value){
-        $html .= '<tr><td>'.$name.'</td>';
+    foreach($schema as $fieldName=>$value){
+        $html .= '<tr><td>'.$fieldName.'</td>';
         $html .= '<td>'.getFieldType($value).'</td>';
         $html .= '</tr>';
     }
 
     $html .= '</tbody></table>';
+    if(!empty($name)){
+        $html .= '<input type="hidden" name="prefill" value="'.htmlspecialchars(json_encode(prefillSchema($schema, $name),JSON_PRETTY_PRINT)).'" />';
+        $html .= '</form>';
+    }
     return $html;
 }
 

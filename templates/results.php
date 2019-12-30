@@ -2,6 +2,33 @@
 if(!($GLOBALS['vfou_admin'] ?? false)) die('unauthorized');
 $results = $results ?? [];
 $sw = $sw ?? '?';
+
+function displayValue($value){
+    if(is_a($value, DateTime::class)){
+        return $value->format(DATE_ATOM);
+    } elseif (is_array($value)){
+        return getFields($value);
+    } else {
+        return $value;
+    }
+}
+
+function getFields($fields, $id = 0){
+    $title = $fields['title'] ?? $fields['name'] ?? (isset($fields['id']) ? 'Document ID = '.$fields['id'] : '');
+    if(!empty($title)) $title = '<caption style="padding:0;"><a title="Edit this document" href="'.$_SERVER['SCRIPT_NAME'].'/edit?id='.$id.'">'.$title.'</a></caption>';
+    $html = '<table>'.$title.'<tbody>';
+    foreach($fields as $field=>$value){
+        $html .= '<tr><td>';
+        if(!is_numeric($field)){
+            $html .= $field.'</td><td>';
+        }
+        $html .= displayValue($value);
+        $html .= '</td></tr>';
+    }
+    $html .= '</tbody></table>';
+    return $html;
+}
+
 ?>
 <form action="">
     <div>
@@ -63,38 +90,9 @@ $sw = $sw ?? '?';
             <p><?php echo $results['numFound'] ?> Documents found in <?php echo $sw ?> ms</p>
             <div class="container">
                 <?php
-
-                function displayValue($value){
-                    if(is_a($value, DateTime::class)){
-                        return $value->format(DATE_ATOM);
-                    } elseif (is_array($value)){
-                        return getFields($value);
-                    } else {
-                        return $value;
-                    }
-                }
-
-                function getFields($fields){
-                    $title = $fields['title'] ?? $fields['name'] ?? (isset($fields['id']) ? 'Document ID = '.$fields['id'] : '');
-                    if(!empty($title)) $title = '<caption>'.$title.'</caption>';
-                    $html = '<table>'.$title.'<tbody>';
-                    foreach($fields as $field=>$value){
-                        $html .= '<tr><td>';
-                        if(!is_numeric($field)){
-                            $html .= $field.'</td><td>';
-                        }
-                        $html .= displayValue($value);
-                        $html .= '</td></tr>';
-                    }
-                    $html .= '</tbody></table>';
-                    return $html;
-                }
-
-                $html = '';
                 foreach($results['documents'] as $id=>$result){
-                    echo '<div class="flex-item"><a style="padding:0;" title="Edit this document" href="'.$_SERVER['SCRIPT_NAME'].'/edit?id='.$id.'">'.getFields($result).'</a></div>';
+                    echo '<div class="flex-item">'.getFields($result, $id).'</div>';
                 }
-                echo $html;
                 ?>
             </div>
             <?php if(!empty($results['connex'])): ?>
@@ -108,7 +106,7 @@ $sw = $sw ?? '?';
                             echo '<p>Nothing relevant found</p>';
                         } else {
                             foreach($results['connex']['documents'] as $id=>$result){
-                                echo '<div class="flex-item"><a style="padding:0;" href="'.$_SERVER['SCRIPT_NAME'].'/edit?id='.$id.'">'.getFields($result).'</a></div>';
+                                echo '<div class="flex-item">'.getFields($result, $id).'</div>';
                             }
                         }
                         ?>

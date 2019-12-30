@@ -42,7 +42,7 @@ if(empty($document)){
     <form action="" method="post" class="container-v">
 
         <label for="document-content">Document</label>
-        <textarea name="content" id="document-content" cols="30" rows="30"><?php echo (!empty($document) ? json_encode($document, JSON_PRETTY_PRINT): '') ?></textarea>
+        <textarea name="content" id="document-content" cols="30" rows="30"><?php echo (!empty($_POST['prefill']) ? htmlspecialchars_decode($_POST['prefill']) : (!empty($document) ? json_encode($document, JSON_PRETTY_PRINT): '')) ?></textarea>
         <input type="submit" value="Send">
     </form>
 </div>
