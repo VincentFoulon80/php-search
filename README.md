@@ -126,7 +126,7 @@ $admin = new AdminPanel();
 $admin->run();
 ```
 
-the AdminPanel's constructor accept as first parameter the same config array as you may use to instanciate the Engine, and you'll want to pass it if you have customized schemas.
+the AdminPanel's constructor accept as first parameter the same config array as you may use to instanciate the Engine, and you'll want to pass it if you have customized schemas. (or else the panel will not work properly)
 
 # License
 
