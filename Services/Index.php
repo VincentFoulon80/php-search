@@ -1036,6 +1036,7 @@ class Index
         }
         $documents = [];
         $i = 0;
+        if(!isset($filters['offset'])) $filters['offset'] = 0;
         foreach ($results as $doc => $score) {
             if ($i < $filters['offset']) {
                 $i++;
