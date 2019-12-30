@@ -106,7 +106,7 @@ For more informations about this library, like using more advanced features, go 
 
 # Admin Panel
 
-**Warning : This panel does not handle any security by itself. If you use it, it's up to you to prevent the public from accessing it !**
+:warning: **Warning : This panel does not handle any security by itself. If you use it, it's up to you to prevent the public from accessing it !**
 
 The Admin panel is a class that need to be instantiated and then run. It's not a callable file so you'll need to call it via a regular php file :
 
