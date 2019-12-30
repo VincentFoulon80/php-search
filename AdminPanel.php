@@ -53,6 +53,8 @@ class AdminPanel
                 break;
             case '/cache/clear':
                 $this->engine->getIndex()->clearCache();
+                header('location: '.$_SERVER['HTTP_REFERER']);
+                exit();
             default:
                 header('location: '.$_SERVER['SCRIPT_NAME']);
                 exit();
