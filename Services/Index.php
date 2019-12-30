@@ -600,6 +600,25 @@ class Index
     }
 
     /**
+     * Returns the configured types
+     * @return array
+     */
+    public function getTypes()
+    {
+        return $this->types;
+    }
+
+    /**
+     * Sets the types
+     * @param array $types
+     */
+    public function setTypes($types)
+    {
+        $this->types = $types;
+    }
+
+
+    /**
      * Closes every opened files, freeing memory
      */
     public function freeMemory(){
@@ -832,10 +851,11 @@ class Index
     /**
      * Tokenizes a query string
      * @param $query
+     * @param string $type
      * @return array
      */
-    public function tokenizeQuery($query){
-        return array_keys($this->tokenize($query, ['_type'=>'search','_boost'=>0]));
+    public function tokenizeQuery($query, $type = 'search'){
+        return array_keys($this->tokenize($query, ['_type'=>$type,'_boost'=>0]));
     }
 
     /**
