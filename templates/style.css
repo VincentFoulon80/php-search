@@ -1,0 +1,98 @@
+body{
+    font-family: sans-serif;
+}
+.container {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding: 10px;
+    align-items: stretch;
+    justify-content: space-evenly;
+}
+.container-v {
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+}
+form.container {
+    justify-content: flex-start;
+}
+a {
+    background: #4273db;
+    display:inline-block;
+    padding: 5px 10px;
+    margin: 5px;
+    text-decoration: none;
+    color: white;
+}
+a:hover, a.active {
+    background: #4393fc;
+}
+nav a{
+    flex: 1;
+}
+.flex-item {
+    min-width: 400px;
+    flex: 0 1;
+    padding: 5px;
+}
+.schema-type {
+    color: #c26f3f;
+}
+.schema-error {
+    color: #d00000
+}
+.alert-error {
+    padding: 5px 10px;
+}
+table {
+    background: #4273db;
+}
+thead, caption, .flex-delimiter {
+    background: #4273db;
+    color: white;
+}
+.flex-delimiter {
+    text-align: center;
+    padding: 5px;
+}
+caption{
+    padding: 5px;
+}
+caption a, caption input[type=submit] {
+    display:block;
+    width:100%;
+    height:100%;
+    margin:0;
+    padding: 5px 0 !important;
+    font-size:12pt;
+}
+tbody tr:nth-child(odd) {
+    background-color: #e8e6ff;
+}
+tbody tr:nth-child(even) {
+    background-color: #cfd4ff;
+}
+table.hover tr:hover {
+    background-color: #f4f3ff;
+}
+input[type=submit] {
+    padding: 10px 20px;
+    background: #4273db;
+    border: none;
+    color: white;
+}
+input.query {
+    min-width: 240px;
+}
+input[type=submit]:hover {
+    padding: 10px 20px;
+    background: #4393fc;
+    border: none;
+    color: white;
+    cursor:pointer;
+}
+.alert-error, a.delete, input.delete {
+    background: #d00000;
+    color: white;
+}

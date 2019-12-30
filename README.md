@@ -104,6 +104,30 @@ var_dump($response);
 
 For more informations about this library, like using more advanced features, go to [the wiki page of this repository](https://github.com/VincentFoulon80/php-search/wiki)
 
+# Admin Panel
+
+**Warning : This panel does not handle any security by itself. If you use it, it's up to you to prevent the public from accessing it !**
+
+The Admin panel is a class that need to be instantiated and then run. It's not a callable file so you'll need to call it via a regular php file :
+
+```php
+<?php
+
+use VFou\Search\AdminPanel;
+
+// include the composer autoload file, modify the path if needed
+require "vendor/autoload.php";
+
+// securize your file access or directly here
+// if($_SERVER['REMOTE_ADDR'] != "127.0.0.1") exit('unauthorized');
+
+// instantiate the panel and then run it
+$admin = new AdminPanel();
+$admin->run();
+```
+
+the AdminPanel's constructor accept as first parameter the same config array as you may use to instanciate the Engine, and you'll want to pass it if you have customized schemas. (or else the panel will not work properly)
+
 # License
 
 This library is under the MIT license. [See the complete license](LICENSE)
