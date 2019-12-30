@@ -76,6 +76,17 @@ class Index
 
     }
 
+    public function getStats(){
+        return [
+            "documentCount" => count($this->documents->scan()),
+            "totalTokens" => count(array_keys($this->index->open('all')->getContent())),
+            "cacheEntries" => count($this->cache->scan()),
+            "schemas" => $this->schemas,
+            "types" => $this->types,
+            "config" => $this->config
+        ];
+    }
+
     /**
      * Create or Update a document into the index
      * @param $document
@@ -163,6 +174,8 @@ class Index
         $this->indexDocs->delete($id);
         // clear the index of every references
         $allFiles = $this->index->openAll();
+        $allTokensFile = $this->index->open('all');
+        $allTokens = $allTokensFile->getContent();
         if($allFiles){
             foreach($allFiles as $file){
                 if($file->getName() == 'all') continue;
@@ -181,6 +194,8 @@ class Index
                 foreach($tokensToRemove as $tokenName){
                     if(isset($tokens[$tokenName]))
                         unset($tokens[$tokenName]);
+                    if(isset($allTokens[$tokenName]))
+                        unset($allTokens[$tokenName]);
                 }
                 if(empty($tokens)){
                     $file->delete();
@@ -189,6 +204,7 @@ class Index
                 }
             }
         }
+        $allTokensFile->setContent($allTokens);
         $this->clearCache();
         return true;
     }
@@ -1083,6 +1099,7 @@ class Index
                 $this->indexDocs = $this->index->getOrCreateDirectory("docs");
             }
             $maxScore = current($documents);
+            if($maxScore == 0) $maxScore = 1; // prevent division by zero
             $count = 0;
             $tokens = [];
             $accuracy = [];
@@ -1109,6 +1126,7 @@ class Index
             foreach($tokens as $token => $score){
                 $found = $this->find($token);
                 foreach($accuracy[$token] as $accu){
+                    if(!isset($result[$token])) $result[$token] = 0;
                     $result[$token] += $score * $accu;
                 }
                 foreach($found as &$foundScore){
