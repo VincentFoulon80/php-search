@@ -11,6 +11,17 @@ install this library via Composer :
 composer require vfou/php-search 0.7
 ```
 
+# What can it do ?
+
+in short :
+- indexing and searching documents (with score, fuzzy search and tokenization)
+- Stemming and stop-words of 12 supported languages
+- Faceting
+- Autocompletion
+- Connex Search
+
+Take a look at the [Feature Page](https://github.com/VincentFoulon80/php-search/wiki/Features) for a more complete listing
+
 # Quick start
 
 The search engine is packaged with an example schema that allow you to take hand quickly on the library.
