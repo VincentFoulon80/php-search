@@ -36,7 +36,7 @@ function getFields($fields, $id = 0){
         <div class="container">
             <div class="container-v">
                 <label for="q">query</label>
-                <input id="q" type="text" name="q" value="<?php echo $_GET['q'] ?? ''; ?>">
+                <input id="q" class="query" type="text" name="q" value="<?php echo $_GET['q'] ?? ''; ?>">
             </div>
             <div class="container-v">
                 <label for="limit">limit</label>
@@ -51,8 +51,8 @@ function getFields($fields, $id = 0){
                 <input id="facets" type="text" name="facets" value="<?php echo $_GET['facets'] ?? ''; ?>">
             </div>
             <div>
-                <input id="facets" type="checkbox" name="connex" value="1" <?php echo ($_GET['connex'] ?? false) ? 'checked':'' ?>>
-                <label for="facets">Enable Connex Search</label>
+                <input id="connex" type="checkbox" name="connex" value="1" <?php echo ($_GET['connex'] ?? false) ? 'checked':'' ?>>
+                <label for="connex">Enable Connex Search</label>
             </div>
             <div class="container-v">
                 <input type="submit" value="Search" style="">
@@ -64,7 +64,6 @@ function getFields($fields, $id = 0){
         <div class="container-v" style="flex:1">
             <?php if(!empty($results['facets'])): ?>
             <div>
-                <input type="submit" value="Search these facets">
                 <h3>Facets</h3>
                 <div class="container-v">
                     <?php
@@ -73,7 +72,7 @@ function getFields($fields, $id = 0){
                             $count = 0;
                             foreach($values as $value=>$count){
                                 echo '<div>';
-                                echo "<input type='checkbox' id='facet-$name-$count' name='facet-".$name."[]' value='$value' ".(in_array($value, $_GET['facet-'.$name]) ? 'checked':'')." />";
+                                echo "<input type='checkbox' id='facet-$name-$count' name='facet-".$name."[]' value='$value' ".(in_array($value, $_GET['facet-'.$name] ?? []) ? 'checked':'')." onclick='this.form.submit();' />";
                                 echo "<label for='facet-$name-$count'>$value ($count)</label>";
                                 echo '</div>';
                                 $count++;

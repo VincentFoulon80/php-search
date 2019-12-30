@@ -99,7 +99,9 @@ function displaySchema($name, $schema){
     }
     return $html;
 }
-
+?>
+<h2>Schema Debugging</h2>
+<?php
 echo '<div class="container">';
 foreach($schemas as $schemaName => $schema){
     echo '<div class="flex-item">';

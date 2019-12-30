@@ -4,6 +4,7 @@ $types = $types ?? [];
 $debugTokens = $debugTokens ?? [];
 ?>
 <form action="">
+    <h2>Type debugging</h2>
     <div class="container">
         <div class="container-v">
             <div>
@@ -31,9 +32,11 @@ $debugTokens = $debugTokens ?? [];
         </div>
         <div style="flex:3;" class="container-v">
             <div>
-                <h2>Debug this type</h2>
-                <input type="text" name="text" value="<?php echo $_GET['text'] ?? '' ?>">
-                <input type="submit" value="Submit">
+                <div class="container-v">
+                    <label for="text">String to tokenize</label>
+                    <input id="text" type="text" class="query" name="text" value="<?php echo $_GET['text'] ?? '' ?>">
+                </div>
+                <input type="submit" value="Tokenize">
             </div>
             <div>
                 <p style="margin-top:10px;">Tokens generated :</p>
