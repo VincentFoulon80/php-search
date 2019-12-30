@@ -3,9 +3,10 @@ if(!($GLOBALS['vfou_admin'] ?? false)) die('unauthorized');
 $results = $results ?? [];
 $sw = $sw ?? '?';
 ?>
+<form action="">
 <div>
     <h2>Document Search</h2>
-    <form action="" class="container">
+    <div class="container">
         <div class="container-v">
             <label for="q">query</label>
             <input id="q" type="text" name="q" value="<?php echo $_GET['q'] ?? ''; ?>">
@@ -29,23 +30,26 @@ $sw = $sw ?? '?';
         <div class="container-v">
             <input type="submit" value="Search" style="">
         </div>
-    </form>
+    </div>
 </div>
 <div class="container">
     <?php if(!empty($results['facets'])): ?>
     <div class="container-v" style="flex:1">
         <?php if(!empty($results['facets'])): ?>
         <div>
+            <input type="submit" value="Search these facets">
             <h3>Facets</h3>
             <div class="container-v">
                 <?php
                     foreach($results['facets'] as $name=>$values){
                         echo '<div><h4>'.$name.'</h4><div style="margin-top:-20px;" class="container-v">';
+                        $count = 0;
                         foreach($values as $value=>$count){
                             echo '<div>';
-                            echo "<input type='checkbox' id='facet-$name' name='facet-$name' value='$value' />";
-                            echo "<label for='facet-$name'>$value ($count)</label>";
+                            echo "<input type='checkbox' id='facet-$name-$count' name='facet-".$name."[]' value='$value' ".(in_array($value, $_GET['facet-'.$name]) ? 'checked':'')." />";
+                            echo "<label for='facet-$name-$count'>$value ($count)</label>";
                             echo '</div>';
+                            $count++;
                         }
                         echo '</div></div>';
                     }
@@ -113,3 +117,4 @@ $sw = $sw ?? '?';
         <?php endif ?>
     </div>
 </div>
+</form>

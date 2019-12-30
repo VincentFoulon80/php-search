@@ -5,6 +5,8 @@ namespace VFou\Search;
 
 
 use Exception;
+use VFou\Search\Query\QueryBuilder;
+use VFou\Search\Query\QuerySegment;
 
 class AdminPanel
 {
@@ -79,12 +81,28 @@ class AdminPanel
     {
         $q = $_GET['q'] ?? '';
         $sw = microtime(true);
-        $results = $this->engine->search($q, [
-            'limit' => $_GET['limit'] ?? 10,
-            'offset' => $_GET['offset'] ?? 0,
-            'facets' => explode(',', $_GET['facets'] ?? ''),
-            'connex' => $_GET['connex'] ?? false
-        ]);
+        $segments = [];
+        foreach($_GET as $field=>$value){
+            if(strpos($field,'facet-') === 0){
+                $facetField = substr($field, 6);
+                $subSeg = [];
+                foreach($value as $v){
+                    $subSeg[] = QuerySegment::exactSearch($facetField, $v);
+                }
+                $segments[] = QuerySegment::or($subSeg);
+            }
+        }
+        $query = new QueryBuilder(QuerySegment::search($q, QuerySegment::and($segments)));
+        $query->setLimit($_GET['limit'] ?? 10);
+        $query->setOffset($_GET['offset'] ?? 0);
+        if($_GET['connex'] ?? false) $query->enableConnex();
+        $facets = $_GET['facets'] ?? '';
+        if(!empty($facets)){
+            foreach(explode(',', $facets) as $facet){
+                $query->addFacet($facet);
+            }
+        }
+        $results = $this->engine->search($query);
         $sw = (microtime(true) - $sw) * 1000;
         include('templates/results.php');
     }
