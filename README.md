@@ -128,7 +128,7 @@ $admin->run();
 
 the AdminPanel's constructor accept as first parameter the same config array as you may use to instanciate the Engine, and you'll want to pass it if you have customized schemas. (or else the panel will not work properly)
 
-More informations are available in the [Admin Panel Manual](https://github.com/VincentFoulon80/php-search/wiki/Admin-Panel-Manual)
+More informations in the [Admin Panel Manual](https://github.com/VincentFoulon80/php-search/wiki/Admin-Panel-Manual)
 
 # License
 
