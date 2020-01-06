@@ -13,9 +13,10 @@ function displayValue($value){
     }
 }
 
-function getFields($fields, $id = 0){
-    $title = $fields['title'] ?? $fields['name'] ?? (isset($fields['id']) ? 'Document ID = '.$fields['id'] : '');
-    if(!empty($title)) $title = '<caption style="padding:0;"><a title="Edit this document" href="'.$_SERVER['SCRIPT_NAME'].'/edit?id='.$id.'">'.$title.'</a></caption>';
+function getFields($fields, $id = 0, $isDocument = false){
+    $title = $fields['title'] ?? $fields['name'] ?? '';
+    if(empty($title)) $title = (isset($fields['id']) ? 'Document ID = '.$fields['id'] : '');
+    if($isDocument && !empty($title)) $title = '<caption style="padding:0;"><a title="Edit this document" href="'.$GLOBALS['vfou_baseurl'].'/edit?id='.$id.'">'.$title.'</a></caption>';
     $html = '<table>'.$title.'<tbody>';
     foreach($fields as $field=>$value){
         $html .= '<tr><td>';
@@ -90,7 +91,7 @@ function getFields($fields, $id = 0){
             <div class="container">
                 <?php
                 foreach($results['documents'] as $id=>$result){
-                    echo '<div class="flex-item">'.getFields($result, $id).'</div>';
+                    echo '<div class="flex-item">'.getFields($result, $id, true).'</div>';
                 }
                 ?>
             </div>

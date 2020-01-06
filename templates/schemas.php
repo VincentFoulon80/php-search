@@ -79,7 +79,7 @@ function prefillSchema($schema, $schemaName = null){
 }
 
 function displaySchema($name, $schema){
-    $html = '<form method="POST" action="'.$_SERVER['SCRIPT_NAME'].'/edit">';
+    $html = '<form method="POST" action="'.$GLOBALS['vfou_baseurl'].'/edit">';
     if(!empty($name)){
         $html .= '<table style="width:100%;"><caption style="padding:0;"><input title="Create a document" type="submit" value="'.$name.'"/></caption><tbody>';
     } else {

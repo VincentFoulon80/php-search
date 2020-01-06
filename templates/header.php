@@ -20,11 +20,11 @@ $uri = $uri ?? '';
             <h1>vfou/php-search Admin panel</h1>
         </div>
         <div class="container">
-            <a href="<?php echo $_SERVER['SCRIPT_NAME'] ?>/" <?php echo ($uri == '/' ? 'class="active"':'') ?>>Statistics</a>
-            <a href="<?php echo $_SERVER['SCRIPT_NAME'] ?>/query" <?php echo ($uri == '/query' ? 'class="active"':'') ?>>Query</a>
-            <a href="<?php echo $_SERVER['SCRIPT_NAME'] ?>/edit" <?php echo ($uri == '/edit' ? 'class="active"':'') ?>>Edit Documents</a>
-            <a href="<?php echo $_SERVER['SCRIPT_NAME'] ?>/types" <?php echo ($uri == '/types' ? 'class="active"':'') ?>>Types</a>
-            <a href="<?php echo $_SERVER['SCRIPT_NAME'] ?>/schemas" <?php echo ($uri == '/schemas' ? 'class="active"':'') ?>>Schemas</a>
+            <a href="<?php echo $GLOBALS['vfou_baseurl'] ?>/" <?php echo ($uri == '/' ? 'class="active"':'') ?>>Statistics</a>
+            <a href="<?php echo $GLOBALS['vfou_baseurl'] ?>/query" <?php echo ($uri == '/query' ? 'class="active"':'') ?>>Query</a>
+            <a href="<?php echo $GLOBALS['vfou_baseurl'] ?>/edit" <?php echo ($uri == '/edit' ? 'class="active"':'') ?>>Edit Documents</a>
+            <a href="<?php echo $GLOBALS['vfou_baseurl'] ?>/types" <?php echo ($uri == '/types' ? 'class="active"':'') ?>>Types</a>
+            <a href="<?php echo $GLOBALS['vfou_baseurl'] ?>/schemas" <?php echo ($uri == '/schemas' ? 'class="active"':'') ?>>Schemas</a>
         </div>
     </nav>
 

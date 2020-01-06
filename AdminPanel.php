@@ -24,15 +24,26 @@ class AdminPanel
     {
         $this->engine = new Engine($configuration);
         $GLOBALS['vfou_admin'] = true;
+        $GLOBALS['vfou_baseurl'] = $_SERVER['SCRIPT_NAME'];
     }
 
     /**
+     * Runs the Admin Panel.
+     * You can provide an $uri parameter that'll override the default extraction from SERVER variable
+     * If provided, $baseUrl is the entry point of any generated url. Useful if you wrapped the panel into a framework for example.
+     *   By default, $_SERVER['SCRIPT_NAME'] is used
+     * @param null $uri
      * @throws Exception
      */
-    public function run()
+    public function run($uri = null, $baseUrl = null)
     {
-        $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-        if(strpos($uri, $_SERVER['SCRIPT_NAME']) == 0) $uri = substr($uri, strlen($_SERVER['SCRIPT_NAME']));
+        if($uri == null){
+            $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+            if(strpos($uri, $_SERVER['SCRIPT_NAME']) == 0) $uri = substr($uri, strlen($_SERVER['SCRIPT_NAME']));
+        }
+        if($baseUrl != null) {
+            $GLOBALS['vfou_baseurl'] = $baseUrl;
+        }
         if(empty($uri)) $uri = '/';
         include('templates/header.php');
         switch($uri){
@@ -56,7 +67,7 @@ class AdminPanel
                 header('location: '.$_SERVER['HTTP_REFERER']);
                 exit();
             default:
-                header('location: '.$_SERVER['SCRIPT_NAME']);
+                header('location: '.$GLOBALS['vfou_baseurl'].'/');
                 exit();
         }
         include('templates/footer.php');

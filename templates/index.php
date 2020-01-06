@@ -31,7 +31,7 @@ function displayConfigArray($array, $prefix = ''){
 ?>
 <div>
     <h2>Statistics</h2>
-    <a class="delete" href="<?php echo $_SERVER['SCRIPT_NAME'] ?>/cache/clear">Clear the cache</a>
+    <a class="delete" href="<?php echo $GLOBALS['vfou_baseurl'] ?>/cache/clear">Clear the cache</a>
     <table style="width:100%">
         <tbody>
             <tr>
