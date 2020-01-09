@@ -33,10 +33,12 @@ class AdminPanel
      * If provided, $baseUrl is the entry point of any generated url. Useful if you wrapped the panel into a framework for example.
      *   By default, $_SERVER['SCRIPT_NAME'] is used
      * @param null $uri
+     * @return false|string
      * @throws Exception
      */
     public function run($uri = null, $baseUrl = null)
     {
+        ob_start();
         if($uri == null){
             $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
             if(strpos($uri, $_SERVER['SCRIPT_NAME']) == 0) $uri = substr($uri, strlen($_SERVER['SCRIPT_NAME']));
@@ -71,6 +73,10 @@ class AdminPanel
                 exit();
         }
         include('templates/footer.php');
+        $output = ob_get_contents();
+        ob_clean();
+        ob_end_clean();
+        return $output;
     }
 
     /**
