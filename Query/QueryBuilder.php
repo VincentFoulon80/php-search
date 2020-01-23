@@ -4,6 +4,8 @@
 namespace VFou\Search\Query;
 
 
+use Exception;
+
 class QueryBuilder
 {
     /** @var string|array|QuerySegment $search */
@@ -19,15 +21,12 @@ class QueryBuilder
      * @param string|QuerySegment $query
      * @param QuerySegment $querySegment
      */
-    public function __construct($query = null, QuerySegment $querySegment = null)
+    public function __construct($query = '', QuerySegment $querySegment = null)
     {
-        $this->search = $query ?? '';
-        if($querySegment != null){
-            if(is_string($query)){
-                $this->search = QuerySegment::search($query, $querySegment);
-            } else {
-                $this->search = $querySegment;
-            }
+        if(is_string($query)){
+            $this->search = QuerySegment::search($query, $querySegment);
+        } else {
+            $this->search = $query;
         }
         $this->limit = 10;
         $this->offset = 0;
@@ -44,131 +43,107 @@ class QueryBuilder
 
     /**
      * @param string $query
-     * @return QueryBuilder
-     * @deprecated Please use QuerySegment::search($query, *other segments*) instead
+     * @throws Exception
      */
     public function search($query = "")
     {
-        if(is_array($this->search)){
-            $this->search['%'] = $query;
-        } else {
-            $this->search = $query;
-        }
-        return $this;
+        throw new Exception('Old QueryBuilder queries are not supported anymore. Please use QuerySegment::search($query, *other segments*) instead.');
     }
 
     /**
      * @param $field
      * @param $terms
-     * @return QueryBuilder
-     * @deprecated Please use QuerySegment::exactSearch($field, $terms) instead
+     * @throws Exception
      */
     public function exactSearch($field, $terms)
     {
-        $this->search = [
-            $field => $terms
-        ];
-        return $this;
+        throw new Exception('Old QueryBuilder queries are not supported anymore. Please use QuerySegment::exactSearch($field, $terms) instead.');
     }
 
     /**
      * @param $field
      * @param $terms
-     * @return $this
-     * @deprecated Please use QuerySegment::exactSearch($field, $terms) instead
+     * @throws Exception
      */
     public function addExactSearch($field, $terms)
     {
-        if(!is_array($this->search)){
-            if(!empty($this->search)){
-                $this->search = ['%'=>$this->search];
-            } else {
-                $this->search = [];
-            }
-        }
-        $this->search[$field][] = $terms;
-        return $this;
+        throw new Exception('Old QueryBuilder queries are not supported anymore. Please use QuerySegment::exactSearch($field, $terms) instead.');
     }
 
     /**
      * @param $field
      * @param $terms
-     * @return QueryBuilder
-     * @deprecated Please use QuerySegment::fieldSearch($field, $terms) instead
+     * @throws Exception
      */
     public function fieldSearch($field, $terms)
     {
-        return $this->exactSearch($field.'%', $terms);
+        throw new Exception('Old QueryBuilder queries are not supported anymore. Please use QuerySegment::fieldSearch($field, $terms) instead.');
     }
 
     /**
      * @param $field
      * @param $terms
-     * @return $this
-     * @deprecated Please use QuerySegment::fieldSearch($field, $terms) instead
+     * @throws Exception
      */
     public function addFieldSearch($field, $terms)
     {
-        return $this->addExactSearch($field.'%', $terms);
+        throw new Exception('Old QueryBuilder queries are not supported anymore. Please use QuerySegment::fieldSearch($field, $terms) instead.');
     }
 
     /**
      * @param $field
      * @param $terms
-     * @return $this
-     * @deprecated Please use QuerySegment::lesserSearch($field, $terms) instead
+     * @throws Exception
      */
-    public function lesserSearch($field, $terms){
-        return $this->addExactSearch($field.'<', $terms);
+    public function lesserSearch($field, $terms)
+    {
+        throw new Exception('Old QueryBuilder queries are not supported anymore. Please use QuerySegment::lesserSearch($field, $terms) instead.');
     }
 
     /**
      * @param $field
      * @param $terms
-     * @return $this
-     * @deprecated Please use QuerySegment::lesserEqualSearch($field, $terms) instead
+     * @throws Exception
      */
-    public function lesserEqualSearch($field, $terms){
-        return $this->addExactSearch($field.'<=', $terms);
+    public function lesserEqualSearch($field, $terms)
+    {
+        throw new Exception('Old QueryBuilder queries are not supported anymore. Please use QuerySegment::lesserEqualSearch($field, $terms) instead.');
     }
 
     /**
      * @param $field
      * @param $terms
-     * @return $this
-     * @deprecated Please use QuerySegment::greaterSearch($field, $terms) instead
+     * @throws Exception
      */
     public function greaterSearch($field, $terms){
-        return $this->addExactSearch($field.'>', $terms);
+        throw new Exception('Old QueryBuilder queries are not supported anymore. Please use QuerySegment::greaterSearch($field, $terms) instead.');
     }
 
     /**
      * @param $field
      * @param $terms
-     * @return $this
-     * @deprecated Please use QuerySegment::greaterEqualSearch($field, $terms) instead
+     * @throws Exception
      */
     public function greaterEqualSearch($field, $terms){
-        return $this->addExactSearch($field.'>=', $terms);
+        throw new Exception('Old QueryBuilder queries are not supported anymore. Please use QuerySegment::greaterEqualSearch($field, $terms) instead.');
     }
 
     /**
      * @param $field
      * @param $terms
-     * @return $this
-     * @deprecated Please use QuerySegment::notEqualSearch($field, $terms) instead
+     * @throws Exception
      */
     public function notEqualSearch($field, $terms){
-        return $this->addExactSearch($field.'!=', $terms);
+        throw new Exception('Old QueryBuilder queries are not supported anymore. Please use QuerySegment::notEqualSearch($field, $terms) instead.');
     }
+
     /**
      * @param $field
      * @param $terms
-     * @return $this
-     * @deprecated Please use QuerySegment::not(QuerySegment::fieldSearch($field, $terms)) instead
+     * @throws Exception
      */
     public function notSearch($field, $terms){
-        return $this->addExactSearch('-'.$field, $terms);
+        throw new Exception('Old QueryBuilder queries are not supported anymore. Please use QuerySegment::not(QuerySegment::fieldSearch($field, $terms)) instead.');
     }
 
     /**

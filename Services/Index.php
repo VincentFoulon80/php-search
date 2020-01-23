@@ -318,17 +318,7 @@ class Index
                 }
                 $query = $regularQuery;
             } else {
-                /** @deprecated Old QueryBuilder queries are deprecated and will be removed on 1.0 */
-                /** @var array $query */
-                if(isset($query['%'])){
-                    $tokens = $this->tokenizeQuery($query['%']);
-                    if(!empty($tokens)){
-                        foreach($tokens as $token){
-                            $this->computeScore($regularResult, $this->find($token));
-                        }
-                    }
-                }
-                $this->processAdvancedSearch($query, $results);
+                throw new Exception('Old QueryBuilder queries are not supported anymore. Please use QuerySegment class instead.');
             }
             if(!empty($regularResult)){
                 $results = array_intersect_key($regularResult, $results);
@@ -406,53 +396,6 @@ class Index
             } else {
                 $results = array_intersect_key($results, $currentResult);
             }
-        }
-    }
-
-    /**
-     * @param $query
-     * @param $results
-     * @throws Exception
-     * @deprecated Please use QuerySegment instead of QueryBuilder to build your queries
-     */
-    private function processAdvancedSearch($query, &$results)
-    {
-        $gtOrltUsed = [];
-        $first = true;
-        foreach($query as $field=>$values) {
-            if($field == '%') return;
-            $fieldResults = [];
-            $mergeMode = 'AND';
-            list($not, $mode, $trueField) = $this->describeField($field);
-            foreach($values as $value){
-                $fieldResults = $this->getAdvancedResult($mode, $trueField, $value, $fieldResults);
-            }
-            if(!empty($mode) && $mode != '%'){ // process multiple iterations of <, >, <= or >= searches
-                if(isset($gtOrltUsed[$trueField])){
-                    $mergeMode = 'AND'; // make it an AND condition
-                }
-                $gtOrltUsed[$trueField] = 1;
-            }
-            if($not){
-                if($first){
-                    $results = array_flip($this->documents->scan());
-                    foreach($results as $key=>&$value){
-                        $value = 0;
-                    }
-                }
-                $results = array_diff_key($results, $fieldResults);
-            } else {
-                if($mergeMode === 'OR'){
-                    $this->computeScore($results, $fieldResults);
-                } elseif($mergeMode === 'AND') {
-                    if($first) {
-                        $results = $fieldResults;
-                    } else {
-                        $results = array_intersect_key($results, $fieldResults);
-                    }
-                }
-            }
-            $first = false;
         }
     }
 
