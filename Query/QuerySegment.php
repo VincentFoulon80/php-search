@@ -262,7 +262,11 @@ class QuerySegment
      */
     public static function not(QuerySegment $segment)
     {
-        $segment->field = '-'.$segment->field;
+        if(substr($segment->field,0,1) === '-'){
+            $segment->field = substr($segment->field,1);
+        } else {
+            $segment->field = '-'.$segment->field;
+        }
         return $segment;
     }
 
@@ -273,19 +277,29 @@ class QuerySegment
      */
     public static function debug(QuerySegment $seg){
         $rtn = [];
-        if($seg->type === QuerySegment::Q_NOT){
-            $rtn[] = '';
+        $prepend = '';
+        if(substr($seg->field,0,1) === '-'){
+            $prepend = 'NOT ';
         }
         foreach($seg->getSegment() as $field=>$value){
             if(is_a($value, QuerySegment::class)){
-                $rtn[] = ' ('.self::debug($value).')';
+                $rtn[] = '('.self::debug($value).')';
                 continue;
             }
             foreach($value as $v){
                 if(is_a($v, \DateTime::class)) $v = $v->format(DATE_ATOM);
-                $rtn[] = ' '.$field.':"'.$v.'"';
+                $rtn[] = $field.':"'.$v.'"';
             }
         }
-        return implode(' '.$seg->type,$rtn);
+        if($seg->type === QuerySegment::Q_SEARCH && !empty($seg->value)){
+            $prepend .= 'SEARCH '.$seg->value;
+            if(count($rtn)){
+                $prepend .= ' WITH ';
+            }
+        }
+        if(count($rtn) == 1){
+            return $prepend.current($rtn);
+        }
+        return $prepend.implode(' '.$seg->type.' ',$rtn);
     }
 }
