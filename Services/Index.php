@@ -437,7 +437,11 @@ class Index
                     $array = $this->index->open('values_' . $field, false)->getContent();
                     $tokens = $this->tokenizeQuery($value);
                     foreach ($tokens as $token) {
-                        $this->computeScore($fieldResults, $array[$token] ?? []);
+                        foreach($array as $indexValue => $indexDocuments){
+                            if(strpos($indexValue,$token) !== false){
+                                $this->computeScore($fieldResults, $indexDocuments);
+                            }
+                        }
                     }
                 }
                 break;
