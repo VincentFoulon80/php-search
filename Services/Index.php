@@ -446,7 +446,11 @@ class Index
                     $array = $this->index->open('values_' . $field, false)->getContent();
                     $tokens = $this->tokenizeQuery($value);
                     foreach ($tokens as $token) {
-                        $this->computeScore($fieldResults, $array[$token] ?? []);
+                        foreach($array as $indexValue => $indexDocuments){
+                            if(strpos($indexValue,$token) !== false){
+                                $this->computeScore($fieldResults, $indexDocuments);
+                            }
+                        }
                     }
                 }
                 break;
@@ -580,7 +584,7 @@ class Index
      */
     private function find($token){
         if(empty($token)) return [];
-        $file = $this->index->open(substr($token,0,1));
+        $file = $this->index->open(base64_encode(substr($token,0,1)));
         $index = $file->getContent();
         if(!isset($index[$token])){
             // find approximative tokens
@@ -905,7 +909,7 @@ class Index
         $document->setContent($index);
         $all = [];
         foreach($index as $token=>$score){
-            $t = substr($token,0,1);
+            $t = base64_encode(substr($token,0,1));
             if(!isset($all[$token])){
                 $all[$token] = $t;
             }
