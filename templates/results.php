@@ -106,7 +106,7 @@ function getFields($fields, $id = 0, $isDocument = false){
                             echo '<p>Nothing relevant found</p>';
                         } else {
                             foreach($results['connex']['documents'] as $id=>$result){
-                                echo '<div class="flex-item">'.getFields($result, $id).'</div>';
+                                echo '<div class="flex-item">'.getFields($result, $id, true).'</div>';
                             }
                         }
                         ?>
