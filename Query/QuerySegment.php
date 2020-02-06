@@ -106,6 +106,15 @@ class QuerySegment
         }
     }
 
+    /**
+     * Returns true whenever there is a children in the current segment
+     * @return bool
+     */
+    public function hasChildren()
+    {
+        return !empty($this->children);
+    }
+
     // --- Static functions ----------------------
 
     /**
@@ -282,6 +291,7 @@ class QuerySegment
             $prepend = 'NOT ';
         }
         foreach($seg->getSegment() as $field=>$value){
+            if($field == '%') continue;
             if(is_a($value, QuerySegment::class)){
                 $rtn[] = '('.self::debug($value).')';
                 continue;

@@ -273,11 +273,13 @@ class Index
 
             $results = [];
             if(!empty($tokens)){
+                // TODO: extract this block #1
                 foreach($tokens as $token){
                     $this->approximateCount = 0;
                     $this->computeScore($results, $this->find($token));
                 }
             } else {
+                // TODO: extract this block #2
                 $results = array_flip($this->documents->scan());
                 foreach($results as $key=>&$value){
                     $value = 0;
@@ -306,7 +308,14 @@ class Index
                 if($query->type == QuerySegment::Q_SEARCH){
                     $regularQuery = $query->getValue();
                     $tokens = $this->tokenizeQuery($query->getValue());
-                    if(!empty($tokens)){
+                    if(empty($query->getValue()) && !$query->hasChildren()){
+                        // TODO: extract this block #2
+                        $regularResult = array_flip($this->documents->scan());
+                        foreach($regularResult as $key=>&$value){
+                            $value = 0;
+                        }
+                    } else if(!empty($tokens)){
+                        // TODO: extract this block #1
                         foreach($tokens as $token){
                             $this->approximateCount = 0;
                             $this->computeScore($regularResult, $this->find($token));
