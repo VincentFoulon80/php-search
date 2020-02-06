@@ -84,24 +84,47 @@ class Engine
     }
 
     /**
+     * @param $token
+     * @param bool $providePonderations
+     * @return array
+     * @throws Exception
+     * @deprecated Suggesting functions now have another suggestion function available. Please use suggestToken($token) instead
+     */
+    public function suggest($token){
+        return $this->suggestToken($token);
+    }
+
+    /**
      * Suggest last word for a search
      * @param $query
      * @return array
      * @throws Exception
      */
-    public function suggest($query){
+    public function suggestToken($query){
         $terms = explode(' ', $query);
         $search = array_pop($terms);
         $tokens = $this->index->tokenizeQuery($search);
         $suggestions = [];
         foreach($tokens as $token) {
-            $suggestions = array_replace($suggestions, $this->index->suggest($token));
+            $suggestions = array_replace($suggestions, $this->index->suggestToken($token));
         }
         $before = implode(' ',$terms);
         foreach($suggestions as &$suggest){
             $suggest = $before.' '.$suggest;
         }
         return array_chunk($suggestions, 10)[0];
+    }
+
+    /**
+     * @param $field
+     * @param $value
+     * @param bool|string $wrapSpan if true, wrap <span> tags around the matching values.
+     *                              if it's a string, adds the string as a class
+     * @return array
+     * @throws Exception
+     */
+    public function suggestField($field, $value, $wrapSpan = false){
+        return $this->index->suggestField($field, $value, $wrapSpan);
     }
 
     /**
@@ -126,6 +149,7 @@ class Engine
                 'documents_dir' => DIRECTORY_SEPARATOR.'engine'.DIRECTORY_SEPARATOR.'documents',
                 'cache_dir' => DIRECTORY_SEPARATOR.'engine'.DIRECTORY_SEPARATOR.'cache',
                 'fuzzy_cost' => 1,
+                'approximate_limit' => 5,
                 'connex' => [
                     'threshold' => 0.9,
                     'min' => 3,

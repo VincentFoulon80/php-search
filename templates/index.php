@@ -9,10 +9,11 @@ function displayConfigArray($array, $prefix = ''){
         'documents_dir' => 'Subdirectory of var_dir where documents will be stored',
         'cache_dir' => 'Subdirectory of var_dir where the cache will be stored',
         'fuzzy_cost' => 'Define how many iterations of approximation will be ran on any non-found tokens. Greater is more CPU-intensive and too much won\'t help find accurately',
+        'approximate_limit' => '(-1 = infinite) Define how many times the approximate function will be ran, per token. This function is CPU intensive and we don\'t want it to run in loop when the user typed nonsense',
         'connex.threshold' => '(percentage 0-1) Every document with a score that matches this threshold will be included to the connex search',
-        'connex.min' => 'Minimum number of documents that will be included into the connex search',
-        'connex.max' => 'Maximum number of documents that will be included into the connex search',
-        'connex.limitToken' => 'Maximum of tokens that will be retained in the connex search',
+        'connex.min' => 'Minimum number of documents that will be internally included into the connex search',
+        'connex.max' => 'Maximum number of documents that will be internally included into the connex search',
+        'connex.limitToken' => 'Maximum number of tokens that will be retained in the connex search',
         'connex.limitDocs' => 'Maximum number of documents that\'ll be returned from the connex search'
     ];
     foreach($array as $name => $value){

@@ -53,6 +53,12 @@ class Index
      */
     private $updatingId;
 
+    /**
+     * @var int $approximateCount
+     */
+    private $approximateCount;
+
+
 
     /**
      * Index constructor.
@@ -268,6 +274,7 @@ class Index
             $results = [];
             if(!empty($tokens)){
                 foreach($tokens as $token){
+                    $this->approximateCount = 0;
                     $this->computeScore($results, $this->find($token));
                 }
             } else {
@@ -301,6 +308,7 @@ class Index
                     $tokens = $this->tokenizeQuery($query->getValue());
                     if(!empty($tokens)){
                         foreach($tokens as $token){
+                            $this->approximateCount = 0;
                             $this->computeScore($regularResult, $this->find($token));
                         }
                     }
@@ -595,14 +603,71 @@ class Index
     }
 
     /**
-     * Suggest a list of words matching the provided $token
+     * @param $token
+     * @param bool $providePonderations
+     * @return array
+     * @throws Exception
+     * @deprecated Suggesting functions now have another suggestion function available. Please use suggestToken($token, $providePonderations) instead
+     */
+    public function suggest($token, $providePonderations = false){
+        return $this->suggestToken($token, $providePonderations);
+    }
+
+    /**
+     * @param $field
+     * @param $value
+     * @param bool|string $wrapSpan if true, wrap <span> tags around the matching values.
+     *                              if it's a string, adds the string as a class
+     * @return array
+     * @throws Exception
+     */
+    public function suggestField($field, $value, $wrapSpan = false)
+    {
+        $cached = $this->getCache('suggest_'.md5($field.'_'.$value.'_'.$wrapSpan));
+        if(!empty($cached)){
+            return $cached;
+        }
+        $exactFile = $this->index->open('exact_'.$field);
+        if($exactFile !== null){
+            $value = strtolower($value);
+            $exactContent = array_keys($exactFile->getContent());
+            $matching = [];
+            foreach($exactContent as $exactValue){
+                $exactValue = strtolower($exactValue);
+                $strPos = strpos($exactValue, $value);
+                if($strPos !== false){
+                    if($wrapSpan !== false){
+                        $span = '<span';
+                        if(is_string($wrapSpan)){
+                            $span .= ' class="'.$wrapSpan.'"';
+                        }
+                        $span .= '>';
+                        $exactValue = str_replace($value, $span.$value.'</span>', $exactValue);
+                    }
+                    $matching[$exactValue] = $strPos;
+                }
+            }
+            asort($matching);
+            $matching = array_keys($matching);
+            $this->setCache('suggest_'.md5($field.'_'.$value.'_'.$wrapSpan),$matching);
+            return $matching;
+        }
+        return [];
+    }
+
+    /**
      * @param $token
      * @param bool $providePonderations
      * @return array
      * @throws Exception
      */
-    public function suggest($token, $providePonderations = false){
+    public function suggestToken($token, $providePonderations = false)
+    {
         if(empty($token)) return [];
+        $cached = $this->getCache('suggestToken_'.md5($token.'_'.$providePonderations));
+        if(!empty($cached)){
+            return $cached;
+        }
         $all = $this->index->open('all');
         $tokens = array_keys($all->getContent());
         $matching = [];
@@ -613,10 +678,11 @@ class Index
             }
         }
         asort($matching);
-        if($providePonderations){
-            return $matching;
+        if(!$providePonderations){
+            $matching = array_keys($matching);
         }
-        return array_keys($matching);
+        $this->setCache('suggestToken_'.md5($token.'_'.$providePonderations), $matching);
+        return $matching;
     }
 
     /**
@@ -629,9 +695,13 @@ class Index
     private function fuzzyFind($token)
     {
         if(empty($token) || $this->config['fuzzy_cost'] == 0) return [];
-        $matching = $this->suggest($token, true);
+        $matching = $this->suggestToken($token, true);
         if(empty($matching)){
-            $matching = $this->approximate($token, $this->config['fuzzy_cost']);
+            if($this->config['approximate_limit'] < 0 || $this->approximateCount < $this->config['approximate_limit']) {
+                // approximate_limit is here for preventing the usage of this CPU intensive function
+                $matching = $this->approximate($token, $this->config['fuzzy_cost']);
+                $this->approximateCount++;
+            }
         }
         $found = [];
         if(!empty($matching)){
@@ -658,7 +728,7 @@ class Index
      * @throws Exception
      */
     private function approximate($term, $cost, $positions = []){
-        $cached = $this->getCache('approx_'.$term);
+        $cached = $this->getCache('approx_'.base64_encode($term));
         if(!empty($cached)){
             return $cached;
         }
