@@ -464,7 +464,7 @@ class Index
                     $tokens = $this->tokenizeQuery($value);
                     foreach ($tokens as $token) {
                         foreach($array as $indexValue => $indexDocuments){
-                            if(strpos($indexValue,$token) !== false){
+                            if(strpos($indexValue,strval($token)) !== false){
                                 $this->computeScore($fieldResults, $indexDocuments);
                             }
                         }
@@ -642,8 +642,8 @@ class Index
             $exactContent = array_keys($exactFile->getContent());
             $matching = [];
             foreach($exactContent as $exactValue){
-                $exactValue = strtolower($exactValue);
-                $strPos = strpos($exactValue, $value);
+                $exactValue = strtolower($exactValue); // maybe extract this to configuration ? (tokenizers)
+                $strPos = strpos($exactValue, strval($value));
                 if($strPos !== false){
                     if($wrapSpan !== false){
                         $span = '<span';
@@ -681,7 +681,7 @@ class Index
         $tokens = array_keys($all->getContent());
         $matching = [];
         foreach($tokens as $indexToken){
-            $strPos = strpos($indexToken, $token);
+            $strPos = strpos($indexToken, strval($token));
             if($strPos !== false){
                 $matching[$indexToken] = $strPos;
             }
@@ -757,7 +757,7 @@ class Index
                 }
                 if(strlen($token) >= $termL){
                     $tokenToLink = substr_replace($token, '', $i,1);
-                    $strPos = strpos($tokenToLink,$termToFind);
+                    $strPos = strpos($tokenToLink,strval($termToFind));
                     if($strPos !== false){
                         $matching[$originalToken] = $strPos;
                     }
