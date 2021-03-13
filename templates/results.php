@@ -70,13 +70,13 @@ function getFields($fields, $id = 0, $isDocument = false){
                     <?php
                         foreach($results['facets'] as $name=>$values){
                             echo '<div><h4>'.$name.'</h4><div style="margin-top:-20px;" class="container-v">';
-                            $count = 0;
+                            $i = 0;
                             foreach($values as $value=>$count){
                                 echo '<div>';
-                                echo "<input type='checkbox' id='facet-$name-$count' name='facet-".$name."[]' value='$value' ".(in_array($value, $_GET['facet-'.$name] ?? []) ? 'checked':'')." onclick='this.form.submit();' />";
-                                echo "<label for='facet-$name-$count'>$value ($count)</label>";
+                                echo "<input type='checkbox' id='facet-$name-$i' name='facet-".$name."[]' value='$value' ".(in_array($value, $_GET['facet-'.$name] ?? []) ? 'checked':'')." onclick='this.form.submit();' />";
+                                echo "<label for='facet-$name-$i'>$value ($count)</label>";
                                 echo '</div>';
-                                $count++;
+                                $i++;
                             }
                             echo '</div></div>';
                         }
